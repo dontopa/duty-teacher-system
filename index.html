@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIGAP — Sistem Guru Bertugas Pintar</title>
+  <meta name="description" content="SIGAP memudahkan guru bertugas mingguan mengisi laporan harian — kehadiran, kesihatan, disiplin, pelawat dan aktiviti — terus disahkan oleh pihak pengurusan.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/landing.css">
+</head>
+<body>
+  <div class="scroll-progress" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand"><img src="assets/img/logo.svg" alt="" width="36" height="36"><span>SIGAP</span></a>
+      <nav class="nav-links" aria-label="Utama">
+        <a href="#aliran">Aliran Laporan</a>
+        <a href="#ciri">Ciri-ciri</a>
+        <a href="#peranan">Peranan</a>
+      </nav>
+      <a href="login.html" class="btn btn-dark btn-sm">Log Masuk <i data-ic="arrow"></i></a>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-bg" aria-hidden="true">
+        <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+        <div class="grid-pattern"></div>
+      </div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="pill reveal"><span class="dot-live"></span> Sistem Guru Bertugas Mingguan</span>
+          <h1 class="reveal" style="--d:.08s">Laporan bertugas harian, <span class="rotator" aria-live="polite"><span class="rot-word">lebih pantas.</span></span></h1>
+          <p class="lead reveal" style="--d:.16s">SIGAP membimbing guru bertugas mengisi laporan setiap hari dalam <b>9 langkah ringkas</b> — dari kehadiran hingga aktiviti — dan pihak pengurusan mengesahkannya dengan satu klik.</p>
+          <div class="hero-cta reveal" style="--d:.24s">
+            <a href="login.html" class="btn btn-primary btn-lg">Cuba Demo Sekarang <i data-ic="arrow"></i></a>
+            <a href="#aliran" class="btn btn-ghost btn-lg">Lihat Aliran</a>
+          </div>
+          <ul class="hero-points reveal" style="--d:.32s">
+            <li><i data-ic="check"></i> Mesra telefon</li>
+            <li><i data-ic="check"></i> Simpan draf automatik</li>
+            <li><i data-ic="check"></i> Sedia untuk dicetak</li>
+          </ul>
+        </div>
+
+        <div class="hero-visual reveal" style="--d:.2s" id="tilt">
+          <div class="mock">
+            <div class="mock-head">
+              <span></span><span></span><span></span>
+              <b>Laporan Harian · Khamis</b>
+            </div>
+            <div class="mock-body">
+              <div class="mock-steps">
+                <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="cur"></i><i></i><i></i><i></i><i></i>
+              </div>
+              <div class="mock-kpis">
+                <div><small>Pelajar hadir</small><strong><span class="count" data-to="96.4" data-dec="1">0</span>%</strong><div class="bar"><span style="--w:96%"></span></div></div>
+                <div><small>Guru hadir</small><strong><span class="count" data-to="46">0</span>/48</strong><div class="bar"><span style="--w:95%"></span></div></div>
+              </div>
+              <div class="mock-list">
+                <div class="row"><span class="chip c-amber">Lewat</span> Muhammad Adam · 2 Amanah <em>07:42</em></div>
+                <div class="row"><span class="chip c-rose">Klinik</span> Nur Alya Sofea · 4 Sains <em>09:15</em></div>
+                <div class="row"><span class="chip c-teal">Pelawat</span> PPD Petaling Perdana <em>10:00</em></div>
+              </div>
+              <div class="mock-btn">Hantar untuk Pengesahan <i data-ic="send"></i></div>
+            </div>
+          </div>
+          <div class="float f1"><i data-ic="shield"></i><div><b>Disahkan</b><small>oleh Pengetua · 4:12 ptg</small></div></div>
+          <div class="float f2"><i data-ic="phone"></i><div><b>Isi di mana-mana</b><small>telefon, tablet, PC</small></div></div>
+          <div class="float f3"><span class="ring"></span><div><b>5 / 5 hari</b><small>minggu ini lengkap</small></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <section class="marquee" aria-label="Bahagian laporan">
+      <div class="marquee-track">
+        <div class="marquee-group">
+          <span><i data-ic="userCheck"></i> Kehadiran Guru</span><span><i data-ic="grad"></i> Kehadiran Pelajar</span><span><i data-ic="health"></i> Kesihatan & Klinik</span><span><i data-ic="leaf"></i> Keadaan Sekolah</span><span><i data-ic="badge"></i> Pelawat</span><span><i data-ic="alert"></i> Disiplin</span><span><i data-ic="flag"></i> Aktiviti</span><span><i data-ic="shield"></i> Pengesahan</span>
+        </div>
+        <div class="marquee-group" aria-hidden="true">
+          <span><i data-ic="userCheck"></i> Kehadiran Guru</span><span><i data-ic="grad"></i> Kehadiran Pelajar</span><span><i data-ic="health"></i> Kesihatan & Klinik</span><span><i data-ic="leaf"></i> Keadaan Sekolah</span><span><i data-ic="badge"></i> Pelawat</span><span><i data-ic="alert"></i> Disiplin</span><span><i data-ic="flag"></i> Aktiviti</span><span><i data-ic="shield"></i> Pengesahan</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALIRAN -->
+    <section class="section" id="aliran">
+      <div class="container">
+        <div class="sec-head reveal">
+          <span class="eyebrow">Aliran Laporan</span>
+          <h2>Sembilan langkah. Satu laporan lengkap setiap hari.</h2>
+          <p>Guru bertugas mingguan mengisi laporan mengikut hari — Isnin hingga Jumaat. Setiap langkah ringkas dan jelas.</p>
+        </div>
+        <ol class="flow" id="flow">
+          <li class="reveal"><span class="num">01</span><i data-ic="userCheck"></i><h3>Kehadiran Guru</h3><p>Guru tidak hadir beserta sebab — MC, kursus, urusan rasmi.</p></li>
+          <li class="reveal"><span class="num">02</span><i data-ic="grad"></i><h3>Kehadiran Pelajar</h3><p>Bilangan hadir setiap kelas; peratus dikira automatik.</p></li>
+          <li class="reveal"><span class="num">03</span><i data-ic="health"></i><h3>Tidak Sihat & Klinik</h3><p>Pelajar sakit, rawatan bilik sakit atau dibawa ke klinik.</p></li>
+          <li class="reveal"><span class="num">04</span><i data-ic="leaf"></i><h3>Keadaan Sekeliling</h3><p>Kebersihan, tandas, kantin, pagar & keselamatan.</p></li>
+          <li class="reveal"><span class="num">05</span><i data-ic="badge"></i><h3>Pelawat</h3><p>Nama, organisasi, tujuan serta masa masuk & keluar.</p></li>
+          <li class="reveal"><span class="num">06</span><i data-ic="alert"></i><h3>Disiplin</h3><p>Lewat hadir, ponteng, pakaian dan tindakan diambil.</p></li>
+          <li class="reveal"><span class="num">07</span><i data-ic="flag"></i><h3>Aktiviti Harian</h3><p>Perhimpunan, program, kokurikulum dan mesyuarat.</p></li>
+          <li class="reveal"><span class="num">08</span><i data-ic="shield"></i><h3>Pengesahan Pengurusan</h3><p>Pentadbir semak, beri ulasan & sahkan atau kembalikan.</p></li>
+          <li class="reveal last"><span class="num">09</span><i data-ic="done"></i><h3>Tamat</h3><p>Ringkasan lengkap — sedia dicetak & difailkan.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- CIRI -->
+    <section class="section alt" id="ciri">
+      <div class="container">
+        <div class="sec-head reveal">
+          <span class="eyebrow">Ciri-ciri</span>
+          <h2>Direka untuk rutin sebenar guru bertugas.</h2>
+        </div>
+        <div class="bento">
+          <article class="card big reveal">
+            <div class="card-ic"><i data-ic="phone"></i></div>
+            <h3>Mesra telefon bimbit</h3>
+            <p>Isi laporan sambil meronda kawasan sekolah. Paparan kemas di telefon, tablet dan komputer.</p>
+            <div class="phone-demo" aria-hidden="true">
+              <div class="pd-bar"></div>
+              <div class="pd-line w80"></div><div class="pd-line w60"></div>
+              <div class="pd-seg"><span class="on">Baik</span><span>Sederhana</span><span>Tindakan</span></div>
+              <div class="pd-line w70"></div>
+              <div class="pd-btn"></div>
+            </div>
+          </article>
+          <article class="card reveal" style="--d:.08s"><div class="card-ic amber"><i data-ic="shield"></i></div><h3>Pengesahan satu klik</h3><p>Pentadbir menyemak, memberi ulasan, mengesahkan atau mengembalikan laporan.</p></article>
+          <article class="card reveal" style="--d:.16s"><div class="card-ic"><i data-ic="save"></i></div><h3>Draf automatik</h3><p>Setiap perubahan disimpan. Sambung bila-bila masa tanpa kehilangan data.</p></article>
+          <article class="card reveal" style="--d:.08s"><div class="card-ic rose"><i data-ic="chart"></i></div><h3>Papan pemuka analitik</h3><p>Trend kehadiran, kes kesihatan & disiplin — sekali pandang.</p></article>
+          <article class="card reveal" style="--d:.16s"><div class="card-ic"><i data-ic="printer"></i></div><h3>Sedia dicetak</h3><p>Format laporan rasmi untuk difailkan dalam fail guru bertugas.</p></article>
+          <article class="card reveal" style="--d:.24s"><div class="card-ic amber"><i data-ic="calendar"></i></div><h3>Jadual bertugas</h3><p>Tetapkan guru bertugas mengikut minggu; mereka nampak hari yang perlu diisi.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERANAN -->
+    <section class="section" id="peranan">
+      <div class="container">
+        <div class="sec-head reveal">
+          <span class="eyebrow">Dua Peranan</span>
+          <h2>Setiap orang nampak apa yang mereka perlukan.</h2>
+        </div>
+        <div class="roles">
+          <article class="role reveal">
+            <div class="role-top"><span class="role-ic"><i data-ic="user"></i></span><div><h3>Guru Bertugas</h3><small>Guru biasa</small></div></div>
+            <ul>
+              <li><i data-ic="check"></i> Lihat minggu bertugas & status setiap hari</li>
+              <li><i data-ic="check"></i> Isi laporan harian 9 langkah</li>
+              <li><i data-ic="check"></i> Terima ulasan & buat pembetulan</li>
+              <li><i data-ic="check"></i> Cetak laporan yang disahkan</li>
+            </ul>
+          </article>
+          <article class="role dark reveal" style="--d:.1s">
+            <div class="role-top"><span class="role-ic"><i data-ic="shield"></i></span><div><h3>Pentadbir</h3><small>Pengetua · PK · Admin</small></div></div>
+            <ul>
+              <li><i data-ic="check"></i> Sahkan atau kembalikan laporan</li>
+              <li><i data-ic="check"></i> Urus jadual guru bertugas mingguan</li>
+              <li><i data-ic="check"></i> Urus pengguna, kelas & tetapan sekolah</li>
+              <li><i data-ic="check"></i> Pantau trend kehadiran & disiplin</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="stats">
+      <div class="container stats-grid">
+        <div class="reveal"><strong><span class="count" data-to="9">0</span></strong><span>bahagian laporan</span></div>
+        <div class="reveal" style="--d:.08s"><strong><span class="count" data-to="5">0</span></strong><span>hari seminggu</span></div>
+        <div class="reveal" style="--d:.16s"><strong><span class="count" data-to="2">0</span></strong><span>peranan pengguna</span></div>
+        <div class="reveal" style="--d:.24s"><strong><span class="count" data-to="0">0</span></strong><span>helaian kertas</span></div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section">
+      <div class="container">
+        <div class="cta reveal">
+          <div class="cta-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span></div>
+          <div class="cta-copy">
+            <h2>Cuba SIGAP dengan akaun demo.</h2>
+            <p>Data contoh sudah tersedia — jadual bertugas, laporan dihantar, disahkan & perlu pembetulan.</p>
+            <div class="creds">
+              <div><small>Guru</small><code>aminah@sigap.edu.my</code><code>guru123</code></div>
+              <div><small>Pentadbir</small><code>admin@sigap.edu.my</code><code>admin123</code></div>
+            </div>
+          </div>
+          <a href="login.html" class="btn btn-light btn-lg">Log Masuk Demo <i data-ic="arrow"></i></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container foot-inner">
+      <a href="#" class="brand"><img src="assets/img/logo.svg" alt="" width="30" height="30"><span>SIGAP</span></a>
+      <p>Sistem Guru Bertugas Pintar · Dibina untuk sekolah Malaysia.</p>
+      <p class="muted">© <span id="yr"></span> SIGAP. Data dalam demo ini adalah rekaan.</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/landing.js"></script>
+</body>
+</html>

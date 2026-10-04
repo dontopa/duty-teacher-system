@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log Masuk · SIGAP</title>
+  <meta name="theme-color" content="#0f766e">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body class="auth">
+  <aside class="auth-side">
+    <span class="a-blob a1"></span><span class="a-blob a2"></span>
+    <a href="index.html" class="brand light"><img src="assets/img/logo.svg" alt="" width="40" height="40"><span>SIGAP</span></a>
+    <div class="auth-quote">
+      <h2>Bertugas dengan tenang. Laporan siap sebelum loceng terakhir.</h2>
+      <ul>
+        <li><i data-ic="check"></i> 9 langkah laporan harian</li>
+        <li><i data-ic="check"></i> Pengesahan terus oleh pengurusan</li>
+        <li><i data-ic="check"></i> Mesra telefon bimbit</li>
+      </ul>
+    </div>
+    <small>Sistem Guru Bertugas Pintar</small>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <a href="index.html" class="brand auth-brand-m"><img src="assets/img/logo.svg" alt="" width="36" height="36"><span>SIGAP</span></a>
+      <h1>Selamat kembali 👋</h1>
+      <p class="muted">Log masuk untuk mengisi atau menyemak laporan guru bertugas.</p>
+
+      <form id="loginForm" class="form" novalidate>
+        <label class="field">
+          <span>E-mel</span>
+          <div class="input-ic"><i data-ic="mail"></i><input type="email" id="email" autocomplete="username" placeholder="nama@sigap.edu.my" required></div>
+        </label>
+        <label class="field">
+          <span>Kata laluan</span>
+          <div class="input-ic"><i data-ic="lock"></i><input type="password" id="password" autocomplete="current-password" placeholder="••••••••" required></div>
+        </label>
+        <p class="form-error" id="err" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit">Log Masuk <i data-ic="arrow"></i></button>
+      </form>
+
+      <div class="demo-box">
+        <div class="demo-head"><i data-ic="key"></i> Akaun demo — klik untuk log masuk</div>
+        <div class="demo-list" id="demoList"></div>
+      </div>
+      <p class="tiny muted">Data disimpan dalam pelayar anda (localStorage) untuk tujuan demo.</p>
+    </div>
+  </main>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script>
+    (function () {
+      paintIcons();
+      SIGAP.load();
+      if (SIGAP.currentUser()) { location.replace('app.html'); return; }
+      const demos = [
+        ['u1', 'admin123'], ['u2', 'admin123'], ['u3', 'guru123'], ['u4', 'guru123'], ['u5', 'guru123']
+      ];
+      const list = document.getElementById('demoList');
+      list.innerHTML = demos.map(([id, pw]) => {
+        const u = SIGAP.user(id); if (!u) return '';
+        const ini = SIGAP.initials(u.nama);
+        return '<button type="button" class="demo-item" data-email="' + u.email + '" data-pw="' + pw + '">' +
+          '<span class="avatar ' + (u.role === 'admin' ? 'av-admin' : '') + '">' + ini + '</span>' +
+          '<span class="demo-txt"><b>' + u.nama + '</b><small>' + u.email + ' · ' + pw + '</small></span>' +
+          '<span class="role-tag ' + u.role + '">' + (u.role === 'admin' ? 'Admin' : 'Guru') + '</span></button>';
+      }).join('');
+      const form = document.getElementById('loginForm'), err = document.getElementById('err');
+      function attempt(email, pw) {
+        const u = SIGAP.login(email, pw);
+        if (!u) { err.textContent = 'E-mel atau kata laluan tidak sah.'; err.hidden = false; form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); return; }
+        location.href = 'app.html';
+      }
+      form.addEventListener('submit', e => { e.preventDefault(); attempt(email.value, password.value); });
+      list.addEventListener('click', e => {
+        const b = e.target.closest('.demo-item'); if (!b) return;
+        email.value = b.dataset.email; password.value = b.dataset.pw;
+        attempt(b.dataset.email, b.dataset.pw);
+      });
+    })();
+  </script>
+</body>
+</html>
