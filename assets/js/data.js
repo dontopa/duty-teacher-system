@@ -73,8 +73,6 @@
   const STAFF = ['Pn. Zarina binti Abu', 'En. Hafiz bin Rahman', 'Pn. Tan Mei Ling', 'En. Suresh a/l Muthu', 'Pn. Faridah binti Salleh', 'Cik Nur Aisyah binti Karim',
     'En. Azman bin Daud', 'Pn. Wong Siew Yen', 'Pn. Kavitha a/p Raman', 'En. Mohd Firdaus bin Ali', 'Pn. Rosmah binti Jusoh', 'Cik Lee Hui Min',
     'En. Ramli bin Ahmad', 'Pn. Salmiah binti Idris', 'En. Chong Kah Wai', 'Pn. Norhayati binti Musa'];
-  const PELAJAR = ['Muhammad Adam', 'Nur Alya Sofea', 'Lim Jun Hao', 'Arjun a/l Siva', 'Siti Nurhaliza', 'Ahmad Danish', 'Tan Yi Xuan', 'Priya a/p Ganesan',
-    'Muhammad Irfan', 'Nurul Iman', 'Wong Kai Le', 'Haziq Hakimi', 'Aina Batrisyia', 'Darshan a/l Kumar', 'Aiman Hakim', 'Chloe Teoh', 'Amirul Asyraf', 'Puteri Balqis'];
   const SIMPTOM = ['Demam', 'Sakit perut', 'Pening kepala', 'Luka ketika PJ', 'Asma', 'Muntah', 'Terseliuh kaki', 'Sakit gigi'];
   const PELAWAT = [
     { nama: 'En. Rizal bin Osman', organisasi: 'PPD Petaling Perdana', tujuan: 'Pemantauan PdP' },
@@ -97,14 +95,16 @@
     ['15:00', 'Gotong-royong kelas', 'Seluruh kawasan sekolah']
   ];
 
-  function blankReport(date, rosterId, uid, settings, classes) {
+  // Satu baris kehadiran bagi setiap kelas (snapshot enrolmen dari senarai pelajar)
+  function attRow(c, students) { const n = students.filter(x => x.kelasId === c.id).length; return { kelasId: c.id, nama: c.nama, enrolmen: n, hadir: n, tidakHadir: [], disemak: false }; }
+  function blankReport(date, rosterId, uid, settings, classes, students) {
     const items = {};
     ASPEK.forEach(a => { items[a.key] = { status: 'Baik', catatan: '' }; });
     return {
       id: 'r_' + date, date, rosterId, filledBy: uid, status: 'draf',
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), submittedAt: null,
       guru: { jumlah: settings.jumlahGuru, tidakHadir: [], catatan: '' },
-      pelajar: { kelas: classes.map(c => ({ kelasId: c.id, nama: c.nama, enrolmen: c.enrolmen, hadir: '' })), catatan: '' },
+      pelajar: { kelas: classes.map(c => attRow(c, students)), catatan: '' },
       kesihatan: [],
       sekitar: { items, catatan: '' },
       pelawat: [],
@@ -115,17 +115,25 @@
     };
   }
 
-  function genReport(date, roster, status, r, settings, classes, users) {
+  function genReport(date, roster, status, r, settings, classes, users, students) {
     const pick = a => a[Math.floor(r() * a.length)];
     const filler = roster.teacherIds[Math.floor(r() * roster.teacherIds.length)];
-    const rep = blankReport(date, roster.id, filler, settings, classes);
+    const fu = users.find(u => u.id === filler);
+    const myCls = classes.filter(c => fu.kelasIds.includes(c.id));
+    const rep = blankReport(date, roster.id, filler, settings, myCls, students);
+    const pickStu = () => { const c = pick(myCls); const st = pick(students.filter(x => x.kelasId === c.id)); return { kelas: c.nama, kelasId: c.id, pelajarId: st.id, nama: st.nama }; };
     const n = Math.floor(r() * 4);
     const used = new Set();
     for (let i = 0; i < n; i++) { let s = pick(STAFF); if (used.has(s)) continue; used.add(s); rep.guru.tidakHadir.push({ nama: s, sebab: pick(SEBAB_GURU.slice(0, 4)) }); }
-    rep.pelajar.kelas.forEach(k => { k.hadir = k.enrolmen - Math.floor(r() * 4); });
+    rep.pelajar.kelas.forEach(k => {
+      const pool = students.filter(x => x.kelasId === k.kelasId), n = Math.floor(r() * 3);
+      const abs = new Set(); for (let i = 0; i < n; i++) abs.add(pick(pool));
+      k.tidakHadir = [...abs].map(x => ({ id: x.id, nama: x.nama }));
+      k.hadir = k.enrolmen - k.tidakHadir.length; k.disemak = status !== 'draf' || r() < .5;
+    });
     if (r() < 0.25) rep.pelajar.catatan = 'Beberapa pelajar Tingkatan 4 menyertai pertandingan di peringkat daerah.';
     const ks = Math.floor(r() * 3);
-    for (let i = 0; i < ks; i++) rep.kesihatan.push({ nama: pick(PELAJAR), kelas: pick(classes).nama, simptom: pick(SIMPTOM), tindakan: pick(TINDAKAN_SAKIT.slice(0, 3)), masa: pad(8 + Math.floor(r() * 5)) + ':' + pad(Math.floor(r() * 4) * 15) });
+    for (let i = 0; i < ks; i++) rep.kesihatan.push({ ...pickStu(), simptom: pick(SIMPTOM), tindakan: pick(TINDAKAN_SAKIT.slice(0, 3)), masa: pad(8 + Math.floor(r() * 5)) + ':' + pad(Math.floor(r() * 4) * 15) });
     ASPEK.forEach(a => {
       const x = r();
       if (x < 0.12) rep.sekitar.items[a.key] = { status: 'Perlu Tindakan', catatan: a.key === 'tandas' ? 'Paip bocor di tandas lelaki Blok B' : a.key === 'longkang' ? 'Longkang tersumbat berhampiran kantin' : 'Perlu perhatian penyelenggaraan' };
@@ -135,7 +143,7 @@
     const dn = 1 + Math.floor(r() * 5);
     for (let i = 0; i < dn; i++) {
       const kes = r() < 0.6 ? 'Lewat hadir' : pick(KESALAHAN);
-      rep.disiplin.push({ nama: pick(PELAJAR), kelas: pick(classes).nama, kesalahan: kes, masa: kes === 'Lewat hadir' ? '07:' + pad(31 + Math.floor(r() * 25)) : pad(9 + Math.floor(r() * 4)) + ':' + pad(Math.floor(r() * 6) * 10), tindakan: kes === 'Lewat hadir' ? 'Nama dicatat, amaran lisan' : 'Dirujuk kepada Guru Disiplin' });
+      rep.disiplin.push({ ...pickStu(), kesalahan: kes, masa: kes === 'Lewat hadir' ? '07:' + pad(31 + Math.floor(r() * 25)) : pad(9 + Math.floor(r() * 4)) + ':' + pad(Math.floor(r() * 6) * 10), tindakan: kes === 'Lewat hadir' ? 'Nama dicatat, amaran lisan' : 'Dirujuk kepada Guru Disiplin' });
     }
     const dow = parseISO(date).getDay();
     const acts = dow === 1 ? [AKTIVITI[0]] : [AKTIVITI[1]];
@@ -169,10 +177,24 @@
       { id: 'u7', nama: 'Cikgu Faizal bin Omar', email: 'faizal@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Pendidikan Jasmani', telefon: '012-667 3301' },
       { id: 'u8', nama: 'Cikgu Siti Mariam binti Zakaria', email: 'mariam@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Sejarah', telefon: '014-889 1276' }
     ];
-    const classes = [
-      ['1 Amanah', 32], ['1 Bestari', 31], ['2 Amanah', 33], ['2 Bestari', 30], ['3 Amanah', 34],
-      ['3 Bestari', 32], ['4 Sains', 29], ['4 Sastera', 31], ['5 Sains', 28], ['5 Sastera', 30]
-    ].map((c, i) => ({ id: 'k' + (i + 1), nama: c[0], enrolmen: c[1] }));
+    const classes = ['1 Amanah', '2 Bestari', '3 Amanah', '4 Sains', '4 Sastera', '5 Sains'].map((n, i) => ({ id: 'k' + (i + 1), nama: n }));
+    const NAMA = [
+      // 1 Amanah
+      'Muhammad Adam bin Rizal', 'Nur Alya Sofea binti Azman', 'Lim Jun Hao', 'Arjun a/l Siva', 'Siti Nurhaliza binti Rahim', 'Ahmad Danish bin Kamal', 'Tan Yi Xuan', 'Nur Iman Qistina binti Hafiz', 'Muhammad Irfan bin Zulkifli', 'Priya a/p Ganesan',
+      // 2 Bestari
+      'Wong Kai Le', 'Haziq Hakimi bin Roslan', 'Aina Batrisyia binti Faizal', 'Darshan a/l Kumar', 'Aiman Hakim bin Shahrul', 'Chloe Teoh Xin Yi', 'Amirul Asyraf bin Nordin', 'Puteri Balqis binti Hisham', 'Nurul Ain binti Jamal', 'Ong Wei Jie',
+      // 3 Amanah
+      'Muhammad Harith bin Azlan', 'Sharifah Nur Aqilah', 'Kavin a/l Rajan', 'Nur Damia binti Sulaiman', 'Lee Zi Xuan', 'Adam Mikhail bin Hairul', 'Farah Nabilah binti Yusri', 'Thivyaa a/p Murugan', 'Afiq Danial bin Rosli', 'Goh Shu Ting',
+      // 4 Sains
+      'Nur Syafiqah binti Ismail', 'Muhammad Luqman bin Hakim', 'Chan Jia Wen', 'Hariz Iskandar bin Mazlan', 'Deeptha a/p Selvam', 'Ahmad Zikri bin Ramli', 'Nur Insyirah binti Kamarul', 'Yap Jun Kit', 'Aisyah Humaira binti Azri', 'Muhammad Syahmi bin Fuad',
+      // 4 Sastera
+      'Nur Adlina binti Rashid', 'Izzat Haikal bin Bakar', 'Ng Pei Shan', 'Mohd Faris bin Ghazali', 'Shalini a/p Krishnan', 'Nur Hidayah binti Salleh', 'Teh Wei Liang', 'Amir Hamzah bin Othman', 'Siti Khadijah binti Musa', 'Ravin a/l Subramaniam',
+      // 5 Sains
+      'Muhammad Aqil bin Firdaus', 'Nur Batrisyia binti Ahmad', 'Khoo Jia Hui', 'Danish Haikal bin Rahman', 'Kirthana a/p Mohan', 'Nur Farhana binti Zainal', 'Lau Chee Keong', 'Arif Hakimi bin Yaakob', 'Nur Qaseh binti Hamdan', 'Aidil Fitri bin Saad'
+    ];
+    const students = NAMA.map((n, i) => ({ id: 's' + (i + 1), nama: n, kelasId: classes[Math.floor(i / 10)].id }));
+    const kelasGuru = { u3: ['k1', 'k2', 'k3'], u4: ['k4', 'k5'], u5: ['k4', 'k6'], u6: ['k1', 'k5', 'k6'], u7: ['k2', 'k3'], u8: ['k3', 'k5', 'k6'] };
+    users.forEach(u => { u.kelasIds = kelasGuru[u.id] || []; });
     const settings = { namaSekolah: 'SMK Taman Seri Murni', kodSekolah: 'BEA8642', jumlahGuru: 48, daerah: 'Petaling Perdana, Selangor' };
 
     const thisMon = mondayOf(new Date());
@@ -193,17 +215,17 @@
           if (i === days.length - 1) return; // biarkan hari terkini kosong untuk demo
           st = i === 0 ? 'disahkan' : i === days.length - 2 ? 'draf' : 'dihantar';
         }
-        reports.push(genReport(d, ro, st, r, settings, classes, users));
+        reports.push(genReport(d, ro, st, r, settings, classes, users, students));
       });
     });
-    return { version: 1, seededAt: new Date().toISOString(), users, classes, settings, rosters, reports };
+    return { version: 2, seededAt: new Date().toISOString(), users, classes, students, settings, rosters, reports };
   }
 
   /* ---------- Stor ---------- */
   let db = null;
   function load() {
     try { db = JSON.parse(localStorage.getItem(KEY)); } catch (e) { db = null; }
-    if (!db || db.version !== 1) { db = seed(); save(); }
+    if (!db || db.version !== 2) { db = seed(); save(); }
     return db;
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { console.warn('Gagal simpan', e); } }
@@ -254,7 +276,7 @@
     /* Laporan */
     reports: () => [...API.db.reports].sort((a, b) => b.date.localeCompare(a.date)),
     report: date => API.db.reports.find(r => r.date === date) || null,
-    newReport(date, userId) { const ro = API.rosterForDate(date); return blankReport(date, ro ? ro.id : null, userId, API.db.settings, API.db.classes); },
+    newReport(date, userId) { const ro = API.rosterForDate(date); return blankReport(date, ro ? ro.id : null, userId, API.db.settings, API.classesOf(API.user(userId)), API.db.students); },
     saveReport(rep) {
       rep.updatedAt = new Date().toISOString();
       const i = API.db.reports.findIndex(x => x.date === rep.date);
@@ -262,6 +284,31 @@
       save();
     },
     deleteReport(date) { db.reports = db.reports.filter(r => r.date !== date); save(); },
+
+    /* Kelas & pelajar */
+    classesOf(user) { return user && user.role === 'guru' ? API.db.classes.filter(c => (user.kelasIds || []).includes(c.id)) : API.db.classes; },
+    studentsIn: kelasId => API.db.students.filter(s => s.kelasId === kelasId).sort((a, b) => a.nama.localeCompare(b.nama)),
+    classByName: nama => API.db.classes.find(c => c.nama === nama) || null,
+    teachersOfClass: kelasId => API.db.users.filter(u => u.role === 'guru' && (u.kelasIds || []).includes(kelasId)),
+    saveStudent(st) { const i = API.db.students.findIndex(x => x.id === st.id); if (i >= 0) API.db.students[i] = st; else API.db.students.push(st); save(); },
+    deleteStudent(id) { db.students = db.students.filter(s => s.id !== id); save(); },
+    saveClass(c) { const i = API.db.classes.findIndex(x => x.id === c.id); if (i >= 0) API.db.classes[i] = c; else API.db.classes.push(c); save(); },
+    deleteClass(id) {
+      db.classes = db.classes.filter(c => c.id !== id);
+      db.students = db.students.filter(s => s.kelasId !== id);
+      db.users.forEach(u => { if (u.kelasIds) u.kelasIds = u.kelasIds.filter(k => k !== id); });
+      save();
+    },
+    // Pastikan laporan mempunyai baris kehadiran untuk setiap kelas guru ini
+    ensureClasses(rep, user) {
+      API.classesOf(user).forEach(c => { if (!rep.pelajar.kelas.some(k => k.kelasId === c.id)) rep.pelajar.kelas.push(attRow(c, API.db.students)); });
+      return rep;
+    },
+
+    /* Sambung sesi (auto-resume) */
+    setResume(userId, date, step) { try { localStorage.setItem('sigap_resume_' + userId, JSON.stringify({ date, step, at: Date.now() })); } catch (e) { } },
+    getResume(userId) { try { return JSON.parse(localStorage.getItem('sigap_resume_' + userId)); } catch (e) { return null; } },
+    clearResume(userId) { try { localStorage.removeItem('sigap_resume_' + userId); } catch (e) { } },
 
     /* Statistik */
     pelajarStat(rep) {

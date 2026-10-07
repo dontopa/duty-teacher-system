@@ -12,20 +12,32 @@
   --side-w: 256px;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --brand: #2dd4bf; --brand-2: #5eead4; --brand-soft: #123a36; --brand-ink: #ccfbf1;
-    --accent: #fbbf24; --accent-soft: #3b2c0a;
-    --bg: #0b1211; --surface: #121b1a; --surface-2: #17211f; --line: #24312f; --line-2: #1c2826;
-    --ink: #e7efed; --ink-2: #b9c6c3; --muted: #869490;
-    --ok: #4ade80; --ok-soft: #12321f; --warn: #fbbf24; --warn-soft: #382a0c; --bad: #fb7185; --bad-soft: #3a1520; --info: #93c5fd; --info-soft: #172554;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px -8px rgba(0, 0, 0, .6);
-    color-scheme: dark;
-  }
+/* Tema pentadbir — indigo, supaya jelas berbeza daripada papan pemuka guru (teal) */
+body.role-admin {
+  --brand: #4338ca; --brand-2: #4f46e5; --brand-soft: #eef0ff; --brand-ink: #1e1b4b;
+  --bg: #f4f5fb; --surface-2: #f8f9fd; --line: #e3e5f0; --line-2: #eef0f7;
 }
+body.role-admin .sidebar { background: linear-gradient(180deg, #1e1b4b, #312e81); border-right: 0; color: #e0e7ff; }
+body.role-admin .sidebar .school { color: #a5b4fc; }
+body.role-admin .side-nav a { color: #c7d2fe; }
+body.role-admin .side-nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
+body.role-admin .side-nav a.active { background: rgba(255,255,255,.14); color: #fff; }
+body.role-admin .side-nav a.active::before { background: #fbbf24; }
+body.role-admin .side-user { border-top-color: rgba(255,255,255,.14); }
+body.role-admin .side-user small { color: #a5b4fc; }
+body.role-admin .side-user .btn-ghost { color: #c7d2fe; }
+body.role-admin .side-user .btn-ghost:hover { background: rgba(255,255,255,.1); }
+.role-pill { display: inline-flex; align-items: center; gap: 6px; margin: 0 8px 12px; padding: 5px 11px; border-radius: 999px; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; align-self: flex-start; }
+.role-pill.guru { background: var(--brand-soft); color: var(--brand); }
+.role-pill.admin { background: #fbbf24; color: #1e1b4b; }
+.mode-chip { font-size: .72rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; }
+.mode-chip.guru { background: var(--brand-soft); color: var(--brand); }
+.mode-chip.admin { background: #1e1b4b; color: #fde68a; }
+.admin-hero { background: linear-gradient(135deg, #312e81, #1e1b4b); color: #fff; border: 0; }
+.admin-hero p { color: #c7d2fe; }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; font-size: 15px; }
+body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; font-size: 15.5px; }
 a { color: inherit; text-decoration: none; }
 h1, h2, h3, h4 { margin: 0; line-height: 1.2; letter-spacing: -.01em; }
 p { margin: 0; }
@@ -40,7 +52,6 @@ p { margin: 0; }
 .btn:active { transform: scale(.97); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 6px 16px -8px var(--brand); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-primary { color: #04201d; } }
 .btn-primary:hover:not(:disabled) { background: var(--brand-2); }
 .btn-outline { border-color: var(--line); }
 .btn-outline:hover { border-color: var(--brand); color: var(--brand); }
@@ -148,7 +159,6 @@ p { margin: 0; }
 .day { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .14); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; color: #fff; transition: transform .2s var(--ease), background .2s; min-width: 0; }
 a.day:hover { transform: translateY(-3px); background: rgba(255, 255, 255, .18); }
 .day.today { background: #fff; color: var(--ink); border-color: #fff; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .5); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .day.today { color: #0f1d1b; } }
 .day-top { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; }
 .day-name { font-weight: 800; font-size: .9rem; }
 .day-date { font-size: .75rem; opacity: .8; }
@@ -295,6 +305,40 @@ input.invalid { border-color: var(--bad); box-shadow: 0 0 0 4px color-mix(in srg
 .class-card .pbar span { display: block; height: 100%; background: var(--brand); transition: width .3s var(--ease); }
 .class-card.warn .pbar span { background: var(--accent); }
 
+/* Kehadiran pelajar mengikut nama */
+.att-list { display: grid; gap: 14px; }
+.att { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+.att.ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.att-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.att-head b { font-size: 1.05rem; }
+.att-head .grow { flex: 1; min-width: 140px; }
+.att-head small { display: block; color: var(--muted); font-weight: 600; }
+.att-count { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.att-hint { padding: 10px 16px 0; font-size: .85rem; color: var(--muted); font-weight: 600; }
+.stu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; padding: 12px 16px; }
+.stu { display: flex; align-items: center; gap: 10px; text-align: left; font: inherit; font-size: .92rem; font-weight: 600; padding: 11px 12px; min-height: 48px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; transition: background .15s, border-color .15s; }
+.stu .mk { width: 24px; height: 24px; border-radius: 7px; flex: none; display: grid; place-items: center; background: var(--ok-soft); color: var(--ok); }
+.stu .mk .ic { width: 15px; height: 15px; }
+.stu.abs { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); }
+.stu.abs .mk { background: var(--bad); color: #fff; }
+.att-foot { padding: 0 16px 14px; }
+.att-foot .check { padding: 12px 14px; }
+
+/* Sambung sesi */
+.resume { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 16px; background: var(--accent-soft); border: 1.5px solid #fcd34d; flex-wrap: wrap; }
+.resume .ic-big { width: 44px; height: 44px; border-radius: 12px; background: #fbbf24; color: #3b2a00; display: grid; place-items: center; flex: none; }
+.resume .grow { flex: 1; min-width: 200px; }
+.resume b { display: block; font-size: 1rem; }
+.resume small { color: var(--ink-2); font-weight: 600; }
+
+/* Kelas & pelajar (admin) */
+.cls-card .card-head { flex-wrap: wrap; }
+.stu-row { display: flex; align-items: center; gap: 10px; padding: 9px 20px; border-top: 1px solid var(--line-2); font-weight: 600; font-size: .9rem; }
+.stu-row .n { width: 26px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .8rem; }
+.stu-row .grow { flex: 1; min-width: 0; }
+.add-stu { display: flex; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid var(--line-2); }
+.chip-list { display: flex; gap: 6px; flex-wrap: wrap; }
+
 /* Aspek sekitar */
 .aspek-list { display: grid; gap: 10px; }
 .aspek { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 10px 16px; align-items: center; background: var(--surface); transition: border-color .2s, background .2s; }
@@ -355,6 +399,7 @@ input.invalid { border-color: var(--bad); box-shadow: 0 0 0 4px color-mix(in srg
 .verify-box h3 { font-size: 1rem; font-weight: 800; display: flex; gap: 8px; align-items: center; }
 .verify-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .print-only { display: none; }
+.show-m { display: none; }
 
 /* ---------- Carta ---------- */
 .chart { position: relative; }
@@ -461,9 +506,11 @@ input.invalid { border-color: var(--bad); box-shadow: 0 0 0 4px color-mix(in srg
   .auth-side { display: none; }
   .auth-brand-m { display: inline-flex; }
   .today-chip { display: none; }
+  body.role-admin .topbar { background: #1e1b4b; color: #fff; }
+  body.role-admin .topbar .brand { color: #fff; }
 }
 @media (max-width: 640px) {
-  body { font-size: 14.5px; }
+  body { font-size: 15px; }
   .g-2, .g-3 { grid-template-columns: minmax(0, 1fr); }
   .g-4 { gap: 10px; }
   .kpi { padding: 14px; }
@@ -478,6 +525,9 @@ input.invalid { border-color: var(--bad); box-shadow: 0 0 0 4px color-mix(in srg
   .step-foot { padding: 12px 16px; position: sticky; bottom: calc(66px + env(safe-area-inset-bottom)); z-index: 5; border-radius: 0; }
   .step-foot .btn { padding: .62em .8em; }
   .step-foot .hide-m { display: none; }
+  .step-foot .show-m { display: inline; }
+  .stu-grid { grid-template-columns: minmax(0, 1fr); }
+  .step-foot .right { gap: 6px; }
   .aspek { grid-template-columns: 1fr; }
   /* Jadual → kad */
   table.t.stack-m thead { display: none; }

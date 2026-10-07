@@ -19,7 +19,9 @@
   const chip = (st, short) => '<span class="status s-' + S.STATUS[st].tone + '" title="' + S.STATUS[st].label + '">' + S.STATUS[st][short ? 'short' : 'label'] + '</span>';
   const avatar = (u, cls) => '<span class="avatar ' + (cls || '') + (u && u.role === 'admin' ? ' av-admin' : '') + '">' + esc(u ? S.initials(u.nama) : '?') + '</span>';
   const isAdmin = () => me.role === 'admin';
-  const classNames = () => S.db.classes.map(c => c.nama);
+  const myClasses = () => S.classesOf(me);
+  const myClassNames = () => myClasses().map(c => c.nama);
+  const stuNames = kelas => { const c = S.classByName(kelas); return c ? S.studentsIn(c.id).map(x => x.nama) : []; };
   const thisMonday = () => D.toISO(D.mondayOf(new Date()));
   const daysAgo = n => D.toISO(D.addDays(new Date(), -n));
 
@@ -65,8 +67,9 @@
         { key: 'dashboard', ic: 'home', label: 'Utama' },
         { key: 'laporan', ic: 'file', label: 'Laporan', badge: pending },
         { key: 'jadual', ic: 'calendar', label: 'Jadual' },
+        { key: 'kelas', ic: 'grad', label: 'Kelas & Pelajar', short: 'Kelas' },
         { key: 'pengguna', ic: 'users', label: 'Pengguna' },
-        { key: 'tetapan', ic: 'sliders', label: 'Tetapan' }
+        { key: 'tetapan', ic: 'sliders', label: 'Tetapan', desktopOnly: true }
       ];
     }
     const mine = myRosterIds();
@@ -83,13 +86,17 @@
     const items = navItems();
     const link = (it, mobile) => '<a href="#/' + it.key + '" data-nav="' + it.key + '">' + icon(it.ic) + '<span>' + esc(mobile && it.short ? it.short : it.label) + '</span>' + (it.badge ? '<span class="nav-badge">' + it.badge + '</span>' : '') + '</a>';
     $('#sideNav').innerHTML = items.map(it => link(it)).join('');
-    $('#bottomNav').innerHTML = items.map(it => link(it, true)).join('');
-    $('#schoolName').textContent = S.db.settings.namaSekolah;
+    $('#bottomNav').innerHTML = items.filter(it => !it.desktopOnly).map(it => link(it, true)).join('');
+    $('#schoolName').innerHTML = esc(S.db.settings.namaSekolah) + '<br><span class="role-pill ' + me.role + '" style="margin:10px 0 0">' + icon(isAdmin() ? 'shield' : 'user') + (isAdmin() ? 'Mod Pentadbir' : 'Mod Guru') + '</span>';
+    document.body.classList.remove('role-admin', 'role-guru');
+    document.body.classList.add('role-' + me.role);
+    $('#modeChip').className = 'mode-chip ' + me.role;
+    $('#modeChip').textContent = isAdmin() ? 'Pentadbir' : 'Guru';
     $('#sideUser').innerHTML = avatar(me) + '<div class="who"><b>' + esc(me.nama) + '</b><small>' + (isAdmin() ? 'Pentadbir' : 'Guru') + ' · ' + esc(me.jawatan) + '</small></div><button class="btn btn-ghost btn-icon" id="sideLogout" title="Log keluar" aria-label="Log keluar">' + icon('logout') + '</button>';
     $('#avatarBtn').innerHTML = avatar(me);
     $('#todayChip').textContent = D.long(D.todayISO());
     $('#userMenu').innerHTML = '<div class="menu-head"><b>' + esc(me.nama) + '</b><small>' + esc(me.email) + '</small></div>' +
-      '<a href="#/profil">' + icon('user') + ' Profil saya</a><a href="index.html">' + icon('school') + ' Laman utama SIGAP</a>' +
+      '<a href="#/profil">' + icon('user') + ' Profil saya</a>' + (isAdmin() ? '<a href="#/tetapan">' + icon('sliders') + ' Tetapan sekolah</a>' : '') + '<a href="index.html">' + icon('school') + ' Laman utama SIGAP</a>' +
       '<button class="danger" data-logout>' + icon('logout') + ' Log keluar</button>';
     $('#sideLogout').onclick = logout;
     setActive(currentKey);
@@ -109,7 +116,21 @@
   addEventListener('scroll', () => $('.topbar').classList.toggle('scrolled', scrollY > 4), { passive: true });
 
   /* ---------- Penghala ---------- */
-  let currentKey = 'dashboard';
+  let currentKey = 'dashboard', firstRoute = true;
+  // Auto-resume: guru yang tertutup aplikasi semasa mengisi dibawa terus ke langkah terakhir
+  function resumeInfo() {
+    const r = S.getResume(me.id);
+    if (!r || !S.canEdit(me, r.date)) { if (r) S.clearResume(me.id); return null; }
+    const rep = S.report(r.date);
+    if (!rep) { S.clearResume(me.id); return null; }
+    return { date: r.date, step: Math.min(7, r.step || 0) };
+  }
+  function tryResume() {
+    const r = resumeInfo(); if (!r) return false;
+    toast('Sesi disambung semula · Langkah ' + (r.step + 1) + ': ' + S.STEPS[r.step].title, 'info');
+    location.replace('#/laporan/isi/' + r.date + '?s=' + r.step);
+    return true;
+  }
   function route() {
     const h = location.hash.replace(/^#\/?/, '') || 'dashboard';
     const [path, qs] = h.split('?');
@@ -123,17 +144,19 @@
     const key = parts[0];
     setActive(key === 'laporan' && parts[1] === 'isi' && !isAdmin() ? 'isi' : key);
     scrollTo(0, 0);
-    const adminOnly = ['pengguna', 'tetapan'];
+    const adminOnly = ['pengguna', 'tetapan', 'kelas'];
+    if (firstRoute) { firstRoute = false; if (!isAdmin() && (key === 'dashboard' || !location.hash) && tryResume()) return; }
     if (adminOnly.includes(key) && !isAdmin()) return go('#/dashboard');
     switch (key) {
       case 'dashboard': return isAdmin() ? adminDash() : guruDash();
       case 'isi': return goToFill();
       case 'laporan':
-        if (parts[1] === 'isi') return wizard(parts[2], +params.get('s') || 0);
+        if (parts[1] === 'isi') return wizard(parts[2], params.has('s') ? +params.get('s') : null);
         if (parts[1] === 'lihat') return viewReport(parts[2]);
         return listReports();
       case 'jadual': return jadual();
       case 'pengguna': return pengguna();
+      case 'kelas': return kelasPage();
       case 'tetapan': return tetapan();
       case 'profil': return profil();
       default: return go('#/dashboard');
@@ -199,7 +222,7 @@
     }
 
     view.innerHTML = '<div class="page-head"><div><h1>' + greet + ', ' + esc(first) + ' 👋</h1><p>' + D.long(today) + ' · ' + esc(S.db.settings.namaSekolah) + '</p></div></div>' +
-      '<div class="stack">' + hero +
+      '<div class="stack">' + resumeBanner() + hero +
       (fixes.length ? '<div class="callout bad">' + icon('alert') + '<div><b>' + fixes.length + ' laporan perlu pembetulan</b><p>' + fixes.map(r => '<a href="#/laporan/isi/' + r.date + '" style="text-decoration:underline;font-weight:700">' + D.long(r.date) + '</a>').join(', ') + '</p></div></div>' : '') +
       '<div class="grid g-4">' +
       kpi('Laporan saya', reps.length, 'semua minggu', 'file') +
@@ -211,6 +234,8 @@
       '<section class="card"><div class="card-head"><h2>' + icon('file') + ' Laporan terkini</h2><a class="btn btn-ghost btn-sm" href="#/laporan">Semua ' + icon('right') + '</a></div><div class="list">' +
       (reps.slice(0, 6).map(listRow).join('') || emptyHTML('inbox', 'Belum ada laporan', 'Laporan anda akan dipaparkan di sini.')) + '</div></section>' +
       '<div class="stack">' +
+      '<section class="card"><div class="card-head"><h2>' + icon('grad') + ' Kelas saya</h2><span class="muted tiny">' + myClasses().length + ' kelas</span></div><div class="list">' +
+      (myClasses().map(c => '<div class="list-item"><span class="kpi-ic">' + icon('grad') + '</span><div class="grow"><b>' + esc(c.nama) + '</b><small>' + S.studentsIn(c.id).length + ' pelajar</small></div></div>').join('') || emptyHTML('grad', 'Tiada kelas', 'Hubungi pentadbir untuk ditetapkan kelas.')) + '</div></section>' +
       '<section class="card"><div class="card-head"><h2>' + icon('calendar') + ' Giliran akan datang</h2></div><div class="list">' +
       (upcoming.slice(0, 4).map(r => '<div class="list-item">' + dateBox(r.weekStart) + '<div class="grow"><b>' + D.weekRange(r.weekStart) + '</b><small>Bersama ' + esc(r.teacherIds.filter(i => i !== me.id).map(uname).join(', ') || '—') + '</small></div>' + (r.ketua === me.id ? '<span class="tag brand">Ketua</span>' : '') + '</div>').join('') || emptyHTML('calendar', 'Tiada giliran', 'Belum dijadualkan.')) + '</div></section>' +
       '<section class="card"><div class="card-head"><h2>' + icon('shield') + ' Ulasan pengurusan</h2></div><div class="list">' +
@@ -218,6 +243,10 @@
       '</div></section></div></div></div>';
   }
 
+  function resumeBanner() {
+    const r = resumeInfo(); if (!r) return '';
+    return '<div class="resume"><span class="ic-big">' + icon('save') + '</span><div class="grow"><b>Sambung laporan ' + D.long(r.date) + '</b><small>Anda berhenti di Langkah ' + (r.step + 1) + ': ' + esc(S.STEPS[r.step].title) + '. Semua maklumat telah disimpan.</small></div><a class="btn btn-primary" href="#/laporan/isi/' + r.date + '?s=' + r.step + '">' + icon('arrow') + ' Sambung</a></div>';
+  }
   function kpi(label, value, sub, ic, tone) {
     return '<div class="card kpi"><div class="kpi-top"><span>' + esc(label) + '</span><span class="kpi-ic ' + (tone || '') + '">' + icon(ic) + '</span></div><strong>' + value + '</strong><small>' + sub + '</small></div>';
   }
@@ -392,8 +421,8 @@
     },
     kesihatan: {
       title: 'Kes', add: 'Tambah pelajar tidak sihat', none: 'Tiada pelajar tidak sihat hari ini? Biarkan kosong dan teruskan.',
-      blank: () => ({ nama: '', kelas: '', simptom: '', tindakan: S.TINDAKAN_SAKIT[0], masa: nowTime() }),
-      fields: [{ f: 'nama', label: 'Nama pelajar', req: true }, { f: 'kelas', label: 'Kelas', opts: classNames }, { f: 'simptom', label: 'Simptom / masalah', ph: 'cth: Demam' }, { f: 'tindakan', label: 'Tindakan', opts: () => S.TINDAKAN_SAKIT }, { f: 'masa', label: 'Masa', type: 'time' }]
+      blank: () => ({ kelas: myClassNames().length === 1 ? myClassNames()[0] : '', nama: '', pelajarId: '', simptom: '', tindakan: S.TINDAKAN_SAKIT[0], masa: nowTime() }),
+      fields: [{ f: 'kelas', label: '1. Pilih kelas', req: true, opts: myClassNames }, { f: 'nama', label: '2. Pilih pelajar', req: true, opts: row => stuNames(row.kelas), dep: 'kelas' }, { f: 'simptom', label: 'Simptom / masalah', ph: 'cth: Demam' }, { f: 'tindakan', label: 'Tindakan', opts: () => S.TINDAKAN_SAKIT }, { f: 'masa', label: 'Masa', type: 'time' }]
     },
     pelawat: {
       title: 'Pelawat', add: 'Tambah pelawat', none: 'Tiada pelawat hari ini? Biarkan kosong — bahagian ini hanya jika ada.',
@@ -402,8 +431,8 @@
     },
     disiplin: {
       title: 'Kes', add: 'Tambah kes disiplin', none: 'Tiada kes disiplin? Bagus! Biarkan kosong.',
-      blank: () => ({ nama: '', kelas: '', kesalahan: S.KESALAHAN[0], masa: nowTime(), tindakan: '' }),
-      fields: [{ f: 'nama', label: 'Nama pelajar', req: true }, { f: 'kelas', label: 'Kelas', opts: classNames }, { f: 'kesalahan', label: 'Kesalahan', opts: () => S.KESALAHAN }, { f: 'masa', label: 'Masa', type: 'time' }, { f: 'tindakan', label: 'Tindakan', ph: 'cth: Amaran lisan' }]
+      blank: () => ({ kelas: myClassNames().length === 1 ? myClassNames()[0] : '', nama: '', pelajarId: '', kesalahan: S.KESALAHAN[0], masa: nowTime(), tindakan: '' }),
+      fields: [{ f: 'kelas', label: '1. Pilih kelas', req: true, opts: myClassNames }, { f: 'nama', label: '2. Pilih pelajar', req: true, opts: row => stuNames(row.kelas), dep: 'kelas' }, { f: 'kesalahan', label: 'Kesalahan', opts: () => S.KESALAHAN }, { f: 'masa', label: 'Masa', type: 'time' }, { f: 'tindakan', label: 'Tindakan', ph: 'cth: Amaran lisan' }]
     },
     aktiviti: {
       title: 'Aktiviti', add: 'Tambah aktiviti', none: 'Belum ada aktiviti direkodkan.',
@@ -412,12 +441,14 @@
     }
   };
 
-  function fieldHTML(list, i, fd, val) {
+  function fieldHTML(list, i, fd, val, row) {
     const attrs = 'data-list="' + list + '" data-i="' + i + '" data-f="' + fd.f + '"';
     let ctl;
     if (fd.opts) {
-      const opts = fd.opts();
-      ctl = '<select ' + attrs + '>' + (opts.includes(val) ? '' : '<option value="">' + (val ? esc(val) : 'Pilih…') + '</option>') + opts.map(o => '<option' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+      const opts = fd.opts(row || {});
+      const waiting = fd.dep && !(row || {})[fd.dep];
+      const ph = waiting ? '— pilih kelas dahulu —' : val ? esc(val) : '— Pilih —';
+      ctl = '<select ' + attrs + (waiting ? ' disabled' : '') + '>' + (opts.includes(val) ? '' : '<option value="">' + ph + '</option>') + opts.map(o => '<option' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
     } else {
       ctl = '<input type="' + (fd.type || 'text') + '" ' + attrs + ' value="' + esc(val) + '"' + (fd.list ? ' list="' + fd.list + '"' : '') + (fd.ph ? ' placeholder="' + esc(fd.ph) + '"' : '') + '>';
     }
@@ -425,7 +456,7 @@
   }
   function rowsHTML(list) {
     const def = ROWDEF[list], arr = getPath(W.rep, list);
-    return '<div class="rows">' + arr.map((row, i) => '<div class="row-card"><div class="row-head"><span>' + def.title + ' #' + (i + 1) + '</span><button type="button" class="btn btn-ghost btn-icon btn-sm" data-del="' + list + '" data-i="' + i + '" aria-label="Buang">' + icon('trash') + '</button></div><div class="row-grid">' + def.fields.map(fd => fieldHTML(list, i, fd, row[fd.f])).join('') + '</div></div>').join('') +
+    return '<div class="rows">' + arr.map((row, i) => '<div class="row-card"><div class="row-head"><span>' + def.title + ' #' + (i + 1) + '</span><button type="button" class="btn btn-ghost btn-icon btn-sm" data-del="' + list + '" data-i="' + i + '" aria-label="Buang">' + icon('trash') + '</button></div><div class="row-grid">' + def.fields.map(fd => fieldHTML(list, i, fd, row[fd.f], row)).join('') + '</div></div>').join('') +
       (arr.length ? '' : '<div class="none-note">' + icon('info') + esc(def.none) + '</div>') + '</div>' +
       '<button type="button" class="add-row" data-add="' + list + '">' + icon('plus') + esc(def.add) + '</button>';
   }
@@ -435,7 +466,7 @@
     const r = W.rep;
     switch (S.STEPS[i].key) {
       case 'guru': return r.guru.tidakHadir.length ? r.guru.tidakHadir.length + ' T/H' : '';
-      case 'pelajar': return r.pelajar.kelas.every(k => k.hadir !== '') ? pct(S.pelajarStat(r).pct, 0) + '%' : '';
+      case 'pelajar': { const mine = myAtt(); return mine.length && mine.every(x => x.k.disemak) ? pct(attStat(mine).pct, 0) + '%' : ''; }
       case 'kesihatan': return r.kesihatan.length || '';
       case 'sekitar': { const n = Object.values(r.sekitar.items).filter(x => x.status === 'Perlu Tindakan').length; return n ? n + ' isu' : ''; }
       case 'pelawat': return r.pelawat.length || '';
@@ -456,9 +487,18 @@
         textArea('guru.catatan', 'Catatan', 'cth: Guru ganti telah diatur untuk kelas berkenaan.');
     }
     if (k === 'pelajar') {
-      return '<div class="mini-stats"><div class="mini"><small>Enrolmen</small><b id="pE">0</b></div><div class="mini"><small>Hadir</small><b class="ok" id="pH">0</b></div><div class="mini"><small>Tidak hadir</small><b class="bad" id="pT">0</b></div><div class="mini"><small>Peratus</small><b id="pP">0%</b></div></div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="field"><span>Bilangan hadir mengikut kelas *</span></span><button type="button" class="btn btn-outline btn-sm" data-fillall>' + icon('check') + ' Isi semua hadir penuh</button></div>' +
-        '<div class="class-grid">' + r.pelajar.kelas.map((c, ci) => '<label class="class-card" data-ci="' + ci + '"><b>' + esc(c.nama) + '</b><small>Enrolmen ' + c.enrolmen + ' · <span class="cp">-</span></small><input type="number" inputmode="numeric" min="0" max="' + c.enrolmen + '" data-path="pelajar.kelas.' + ci + '.hadir" value="' + esc(c.hadir) + '" aria-label="Hadir ' + esc(c.nama) + '" placeholder="0"><div class="pbar"><span></span></div></label>').join('') + '</div>' +
+      const mine = myAtt(), st = attStat(mine);
+      if (!mine.length) return '<div class="callout warn">' + icon('info') + '<div><b>Tiada kelas ditetapkan</b><p>Anda belum ditetapkan sebarang kelas. Hubungi pentadbir.</p></div></div>';
+      return '<div class="mini-stats"><div class="mini"><small>Enrolmen</small><b>' + st.enrolmen + '</b></div><div class="mini"><small>Hadir</small><b class="ok">' + st.hadir + '</b></div><div class="mini"><small>Tidak hadir</small><b class="bad">' + (st.enrolmen - st.hadir) + '</b></div><div class="mini"><small>Peratus</small><b>' + pct(st.pct) + '%</b></div></div>' +
+        '<div class="callout info">' + icon('info') + '<div><b>Cara isi</b><p>Semua pelajar dianggap hadir. Ketik nama pelajar yang <span style="font-weight:800;color:var(--bad)">TIDAK hadir</span> (jadi merah), kemudian tandakan “Kehadiran disemak”.</p></div></div>' +
+        '<div class="att-list">' + mine.map(({ k: c, ci }) => {
+          const abs = new Set(c.tidakHadir.map(x => x.id));
+          const list = S.studentsIn(c.kelasId);
+          return '<div class="att' + (c.disemak ? ' ok' : '') + '"><div class="att-head"><div class="grow"><b>' + esc(c.nama) + '</b><small>' + list.length + ' pelajar</small></div><span class="att-count">' + (list.length - abs.size) + '/' + list.length + ' <small style="display:inline;font-size:.8rem">hadir</small></span>' +
+            '<button type="button" class="btn btn-outline btn-sm" data-allin="' + ci + '">' + icon('check') + ' Semua hadir</button></div>' +
+            '<div class="stu-grid">' + list.map(x => '<button type="button" class="stu' + (abs.has(x.id) ? ' abs' : '') + '" data-stu="' + x.id + '" data-ci="' + ci + '" aria-pressed="' + abs.has(x.id) + '"><span class="mk">' + icon(abs.has(x.id) ? 'x' : 'check') + '</span>' + esc(x.nama) + '</button>').join('') + '</div>' +
+            '<div class="att-foot"><label class="check"><input type="checkbox" data-path="pelajar.kelas.' + ci + '.disemak"' + (c.disemak ? ' checked' : '') + '><span>Kehadiran kelas ' + esc(c.nama) + ' telah disemak</span></label></div></div>';
+        }).join('') + '</div>' +
         textArea('pelajar.catatan', 'Catatan', 'cth: Pelajar Tingkatan 4 menyertai pertandingan peringkat daerah.');
     }
     if (k === 'kesihatan') return '<div class="callout info">' + icon('health') + '<div><b>Prosedur</b><p>Rekod setiap pelajar yang dirawat di bilik sakit, dijemput ibu bapa atau dibawa ke klinik.</p></div></div>' + rowsHTML('kesihatan');
@@ -485,6 +525,11 @@
     if (k === 'tamat') return finishHTML();
     return '';
   }
+
+  // Baris kehadiran milik kelas guru ini sahaja
+  function myAtt() { const ids = myClasses().map(c => c.id); return W.rep.pelajar.kelas.map((k, ci) => ({ k, ci })).filter(x => ids.includes(x.k.kelasId)); }
+  function attStat(rows) { let e = 0, h = 0; rows.forEach(({ k }) => { e += k.enrolmen; h += k.hadir; }); return { enrolmen: e, hadir: h, pct: e ? h / e * 100 : 0 }; }
+  function syncAtt(c) { const n = S.studentsIn(c.kelasId).length; c.enrolmen = n; c.hadir = n - c.tidakHadir.length; }
 
   function timelineHTML(r) {
     const p = r.pengesahan;
@@ -534,14 +579,22 @@
       return go('#/dashboard');
     }
     const existing = S.report(date);
-    W = { rep: existing ? clone(existing) : S.newReport(date, me.id), step: Math.min(8, Math.max(0, step)), max: 0, locked: false, timer: null };
+    const rep0 = existing ? clone(existing) : S.newReport(date, me.id);
+    S.ensureClasses(rep0, me);
+    rep0.pelajar.kelas.forEach(c => { if (!c.tidakHadir) c.tidakHadir = []; });
+    const resumed = step === null && existing && existing.lastStep > 0;
+    if (step === null) step = existing && existing.lastStep != null ? existing.lastStep : 0;
+    W = { rep: rep0, step: Math.min(7, Math.max(0, step)), max: 0, locked: false, timer: null };
     if (!existing) W.rep.filledBy = me.id;
     W.max = W.step;
+    W.rep.lastStep = W.step;
+    if (existing) S.setResume(me.id, date, W.step);
     setTitle('Laporan ' + D.dayName(date));
     const ro = S.rosterForDate(date);
     view.innerHTML = '<div><a class="back-link" href="#/dashboard">' + icon('left') + ' Kembali</a>' +
       '<div class="wiz-head"><div><h1>Laporan Guru Bertugas</h1><p class="muted">' + D.long(date) + (ro ? ' · Minggu ' + D.weekRange(ro.weekStart) : '') + '</p></div>' +
-      '<div style="display:flex;gap:10px;align-items:center"><span id="wzStatus">' + chip(W.rep.status) + '</span><span class="save-state" id="saveState"><span class="dot"></span><span>' + (existing ? 'Disimpan' : 'Belum disimpan') + '</span></span></div></div>' +
+      '<div style="display:flex;gap:10px;align-items:center"><span id="wzStatus">' + chip(W.rep.status) + '</span><span class="save-state" id="saveState"><span class="dot"></span><span>' + (existing ? 'Disimpan ' + D.stamp(existing.updatedAt).split(', ')[1] : 'Belum disimpan') + '</span></span></div></div>' +
+      (existing && (resumed || W.step > 0) ? '<div class="callout info" style="margin-bottom:14px">' + icon('save') + '<div><b>Disambung dari Langkah ' + (W.step + 1) + '</b><p>Maklumat yang anda isi sebelum ini telah dipulihkan.</p></div></div>' : '') +
       '<div class="wizard"><aside class="card"><div class="wiz-progress"><div class="tiny muted" style="padding:12px 12px 0;font-weight:700">Kemajuan</div><div class="progress"><span id="wzProg"></span></div></div><ol class="stepper" id="stepper"></ol></aside>' +
       '<section class="card step-panel" id="panel"></section></div></div>';
     paintStepper();
@@ -568,17 +621,17 @@
     const last = i === 8;
     $('#panel').innerHTML = '<div class="step-title"><span class="sic">' + icon(s.icon) + '</span><div><small>Langkah ' + (i + 1) + ' / 9</small><h2>' + esc(s.title) + '</h2><p>' + esc(s.desc) + '</p></div></div>' +
       '<div class="step-body ' + (dir === 'back' ? 'back' : dir === 'still' ? 'still' : '') + '">' + stepBody(i) + '</div>' +
-      (last ? '' : '<div class="step-foot"><button type="button" class="btn btn-outline" data-prev' + (i === 0 ? ' disabled' : '') + '>' + icon('left') + ' <span class="hide-m">Kembali</span></button><div class="right"><button type="button" class="btn btn-ghost hide-m" data-save>' + icon('save') + ' Simpan draf</button>' +
+      (last ? '' : '<div class="step-foot"><button type="button" class="btn btn-outline" data-prev' + (i === 0 ? ' disabled' : '') + '>' + icon('left') + ' <span class="hide-m">Kembali</span></button><div class="right"><button type="button" class="btn btn-outline" data-save title="Simpan progres">' + icon('save') + ' <span class="hide-m">Simpan progres</span><span class="show-m">Simpan</span></button>' +
         (i < 7 ? '<button type="button" class="btn btn-primary" data-next>Seterusnya ' + icon('right') + '</button>' : '<button type="button" class="btn btn-outline" data-next>Ringkasan ' + icon('right') + '</button>') + '</div></div>');
-    if (S.STEPS[i].key === 'pelajar') updPelajar();
   }
 
   function gotoStep(n) {
     if (W.locked) return;
     n = Math.max(0, Math.min(8, n));
     const dir = n < W.step ? 'back' : 'fwd';
-    flush();
     W.step = n; W.max = Math.max(W.max, n);
+    if (n <= 7) { W.rep.lastStep = n; W.timer = W.timer || 1; }
+    flush();
     paintStepper(); paintPanel(dir);
     const top = $('.wiz-head'); if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -586,12 +639,13 @@
   function markDirty() {
     const ss = $('#saveState'); if (ss) { ss.classList.add('saving'); ss.lastChild.textContent = 'Menyimpan…'; }
     clearTimeout(W.timer);
-    W.timer = setTimeout(flush, 600);
+    W.timer = setTimeout(flush, 400);
   }
   function flush() {
-    if (!W || !W.timer) return;
+    if (!W || !W.timer || W.locked) return;
     clearTimeout(W.timer); W.timer = null;
     S.saveReport(clone(W.rep));
+    S.setResume(me.id, W.rep.date, W.rep.lastStep || 0);
     const ss = $('#saveState'); if (ss) { ss.classList.remove('saving'); ss.lastChild.textContent = 'Disimpan ' + nowTime(); }
   }
 
@@ -602,32 +656,28 @@
       let v = t.type === 'checkbox' ? t.checked : t.type === 'number' ? (t.value === '' ? '' : Math.max(0, Number(t.value))) : t.value;
       if (t.type === 'radio' && !t.checked) return;
       setPath(W.rep, t.dataset.path, v);
-      if (t.dataset.path.startsWith('pelajar.kelas')) { t.classList.remove('invalid'); updPelajar(); }
+      if (t.dataset.path.startsWith('pelajar.kelas')) { const a = t.closest('.att'); if (a) a.classList.toggle('ok', !!v); }
       if (t.dataset.path === 'guru.jumlah') updGuru();
       if (t.dataset.path === 'akuan') { const b = $('[data-submit]'); if (b) b.disabled = !v; }
       if (t.type === 'radio') { const a = t.closest('.aspek'); if (a) a.classList.toggle('flag', v === 'Perlu Tindakan'); }
     } else if (t.dataset.list) {
-      getPath(W.rep, t.dataset.list)[+t.dataset.i][t.dataset.f] = t.value;
+      const row = getPath(W.rep, t.dataset.list)[+t.dataset.i], f = t.dataset.f;
+      row[f] = t.value;
       t.classList.remove('invalid');
+      if (f === 'kelas' && 'pelajarId' in row) {
+        row.nama = ''; row.pelajarId = '';
+        const c = S.classByName(t.value); row.kelasId = c ? c.id : '';
+        markDirty(); paintPanel('still');
+        const sel = $('[data-list="' + t.dataset.list + '"][data-i="' + t.dataset.i + '"][data-f="nama"]'); if (sel && !sel.disabled) sel.focus();
+        return;
+      }
+      if (f === 'nama' && 'pelajarId' in row) { const c = S.classByName(row.kelas); const st = c && S.studentsIn(c.id).find(x => x.nama === t.value); row.pelajarId = st ? st.id : ''; }
     } else return;
     markDirty();
     if (e.type === 'change') paintStepperCounts();
   }
   function paintStepperCounts() { $$('#stepper li').forEach((li, i) => { const c = stepCount(i), b = li.querySelector('button'); let el = b.querySelector('.cnt'); if (c === '') { if (el) el.remove(); return; } if (!el) { el = document.createElement('span'); el.className = 'cnt'; b.appendChild(el); } el.textContent = c; }); }
   function updGuru() { const g = S.guruStat(W.rep); if ($('#gH')) { $('#gH').textContent = g.hadir; $('#gT').textContent = g.tidakHadir; $('#gP').textContent = pct(g.pct) + '%'; } }
-  function updPelajar() {
-    const st = S.pelajarStat(W.rep);
-    if (!$('#pE')) return;
-    $('#pE').textContent = st.enrolmen; $('#pH').textContent = st.hadir; $('#pT').textContent = st.enrolmen - st.hadir; $('#pP').textContent = pct(st.pct) + '%';
-    $$('.class-card').forEach(card => {
-      const c = W.rep.pelajar.kelas[+card.dataset.ci];
-      const has = c.hadir !== '';
-      const p = has ? Math.min(100, c.hadir / c.enrolmen * 100) : 0;
-      card.querySelector('.cp').textContent = has ? pct(p) + '%' : '-';
-      card.querySelector('.pbar span').style.width = p + '%';
-      card.classList.toggle('warn', has && p < 90);
-    });
-  }
 
   function wizClick(e) {
     const b = e.target.closest('button, [data-step]');
@@ -635,7 +685,18 @@
     if (b.dataset.step !== undefined) return gotoStep(+b.dataset.step);
     if (b.hasAttribute('data-next')) return gotoStep(W.step + 1);
     if (b.hasAttribute('data-prev')) return gotoStep(W.step - 1);
-    if (b.hasAttribute('data-save')) { W.timer = W.timer || 1; flush(); toast('Draf disimpan'); return; }
+    if (b.hasAttribute('data-save')) { W.timer = W.timer || 1; flush(); toast('Progres disimpan · Langkah ' + (W.step + 1) + '/9. Anda boleh sambung bila-bila masa.'); return; }
+    if (b.dataset.stu) {
+      const c = W.rep.pelajar.kelas[+b.dataset.ci], st = S.db.students.find(x => x.id === b.dataset.stu);
+      const i = c.tidakHadir.findIndex(x => x.id === st.id);
+      if (i >= 0) c.tidakHadir.splice(i, 1); else c.tidakHadir.push({ id: st.id, nama: st.nama });
+      syncAtt(c); markDirty(); paintPanel('still'); paintStepperCounts(); return;
+    }
+    if (b.dataset.allin !== undefined) {
+      const c = W.rep.pelajar.kelas[+b.dataset.allin];
+      c.tidakHadir = []; c.disemak = true; syncAtt(c);
+      markDirty(); paintPanel('still'); paintStepperCounts(); toast('Semua pelajar ' + c.nama + ' hadir'); return;
+    }
     if (b.dataset.add) {
       const list = b.dataset.add;
       getPath(W.rep, list).push(ROWDEF[list].blank());
@@ -645,27 +706,22 @@
       return;
     }
     if (b.dataset.del) { getPath(W.rep, b.dataset.del).splice(+b.dataset.i, 1); markDirty(); paintPanel('still'); paintStepperCounts(); return; }
-    if (b.hasAttribute('data-fillall')) {
-      W.rep.pelajar.kelas.forEach((c, ci) => { if (c.hadir === '') { c.hadir = c.enrolmen; const inp = $('[data-path="pelajar.kelas.' + ci + '.hadir"]'); if (inp) inp.value = c.enrolmen; } });
-      updPelajar(); markDirty(); paintStepperCounts(); return;
-    }
     if (b.hasAttribute('data-submit')) return submitReport();
   }
 
   function submitReport() {
     const r = W.rep;
     // buang baris kosong
-    Object.keys(ROWDEF).forEach(list => { const arr = getPath(r, list); const keep = arr.filter(row => Object.entries(row).some(([k, v]) => v && !['sebab', 'tindakan', 'kesalahan', 'masa', 'masuk'].includes(k))); arr.splice(0, arr.length, ...keep); });
+    Object.keys(ROWDEF).forEach(list => { const arr = getPath(r, list); const keep = arr.filter(row => Object.entries(row).some(([k, v]) => v && !['sebab', 'tindakan', 'kesalahan', 'masa', 'masuk', 'kelas', 'kelasId', 'pelajarId'].includes(k))); arr.splice(0, arr.length, ...keep); });
     const errs = [];
     if (!(Number(r.guru.jumlah) > 0)) errs.push([0, 'Jumlah guru mesti diisi.']);
-    if (r.pelajar.kelas.some(k => k.hadir === '' || Number(k.hadir) > k.enrolmen)) errs.push([1, 'Lengkapkan bilangan hadir setiap kelas (tidak melebihi enrolmen).']);
+    if (myAtt().some(x => !x.k.disemak)) errs.push([1, 'Tandakan “Kehadiran disemak” untuk setiap kelas anda.']);
     const reqMiss = Object.keys(ROWDEF).find(list => getPath(r, list).some(row => ROWDEF[list].fields.some(fd => fd.req && !String(row[fd.f] || '').trim())));
     if (reqMiss) errs.push([S.STEPS.findIndex(s => s.key === reqMiss.split('.')[0]), 'Terdapat medan wajib (*) yang belum diisi.']);
     if (!r.akuan) errs.push([7, 'Sila tandakan akuan terlebih dahulu.']);
     if (errs.length) {
       toast(errs[0][1], 'bad');
       gotoStep(errs[0][0]);
-      if (errs[0][0] === 1) $$('.class-card input').forEach(inp => { const c = r.pelajar.kelas[+inp.closest('.class-card').dataset.ci]; if (c.hadir === '' || Number(c.hadir) > c.enrolmen) inp.classList.add('invalid'); });
       $$('[data-list]').forEach(inp => { const fd = ROWDEF[inp.dataset.list].fields.find(f => f.f === inp.dataset.f); if (fd && fd.req && !inp.value.trim()) inp.classList.add('invalid'); });
       return;
     }
@@ -674,6 +730,7 @@
     if (!r.filledBy) r.filledBy = me.id;
     clearTimeout(W.timer); W.timer = null;
     S.saveReport(clone(r));
+    S.clearResume(me.id);
     W.step = 8; W.max = 8; W.locked = true; W.justSent = true;
     $('#wzStatus').innerHTML = chip('dihantar');
     const ss = $('#saveState'); if (ss) ss.lastChild.textContent = 'Dihantar ' + nowTime();
@@ -741,9 +798,9 @@
       sec(1, 'Kehadiran Guru', 'userCheck', '<div class="kv"><div class="mini"><small>Jumlah</small><b>' + g.jumlah + '</b></div><div class="mini"><small>Hadir</small><b class="ok">' + g.hadir + '</b></div><div class="mini"><small>Tidak hadir</small><b class="bad">' + g.tidakHadir + '</b></div></div>' +
         table([['Nama guru', 'nama'], ['Sebab', 'sebab']], r.guru.tidakHadir, 'Semua guru hadir.') + note(r.guru.catatan)) +
       sec(2, 'Kehadiran Pelajar', 'grad', '<div class="kv"><div class="mini"><small>Enrolmen</small><b>' + p.enrolmen + '</b></div><div class="mini"><small>Hadir</small><b class="ok">' + p.hadir + '</b></div><div class="mini"><small>Peratus</small><b>' + pct(p.pct) + '%</b></div></div>' +
-        '<div class="table-wrap"><table class="t stack-m"><thead><tr><th>Kelas</th><th class="r">Enrolmen</th><th class="r">Hadir</th><th class="r">T/H</th><th class="r">%</th></tr></thead><tbody>' +
-        r.pelajar.kelas.map(k => '<tr><td class="t-main"><b>' + esc(k.nama) + '</b></td><td class="r num" data-label="Enrolmen">' + k.enrolmen + '</td><td class="r num" data-label="Hadir">' + (k.hadir === '' ? '-' : k.hadir) + '</td><td class="r num" data-label="Tidak hadir">' + (k.hadir === '' ? '-' : k.enrolmen - k.hadir) + '</td><td class="r num" data-label="%">' + (k.hadir === '' ? '-' : pct(k.hadir / k.enrolmen * 100)) + '</td></tr>').join('') +
-        '</tbody><tfoot><tr><td>Jumlah</td><td class="r num">' + p.enrolmen + '</td><td class="r num">' + p.hadir + '</td><td class="r num">' + (p.enrolmen - p.hadir) + '</td><td class="r num">' + pct(p.pct) + '</td></tr></tfoot></table></div>' + note(r.pelajar.catatan)) +
+        '<div class="table-wrap"><table class="t stack-m"><thead><tr><th>Kelas</th><th class="r">Enrolmen</th><th class="r">Hadir</th><th class="r">T/H</th><th class="r">%</th><th>Pelajar tidak hadir</th></tr></thead><tbody>' +
+        r.pelajar.kelas.map(k => '<tr><td class="t-main"><b>' + esc(k.nama) + '</b></td><td class="r num" data-label="Enrolmen">' + k.enrolmen + '</td><td class="r num" data-label="Hadir">' + (k.hadir === '' ? '-' : k.hadir) + '</td><td class="r num" data-label="Tidak hadir">' + (k.hadir === '' ? '-' : k.enrolmen - k.hadir) + '</td><td class="r num" data-label="%">' + (k.hadir === '' ? '-' : pct(k.hadir / k.enrolmen * 100)) + '</td><td data-label="Nama tidak hadir">' + ((k.tidakHadir || []).map(x => esc(x.nama)).join(', ') || '-') + '</td></tr>').join('') +
+        '</tbody><tfoot><tr><td>Jumlah</td><td class="r num">' + p.enrolmen + '</td><td class="r num">' + p.hadir + '</td><td class="r num">' + (p.enrolmen - p.hadir) + '</td><td class="r num">' + pct(p.pct) + '</td><td></td></tr></tfoot></table></div>' + note(r.pelajar.catatan)) +
       '</div>' +
       sec(3, 'Pelajar Tidak Sihat & Ke Klinik', 'health', table([['Nama pelajar', 'nama'], ['Kelas', 'kelas'], ['Simptom', 'simptom'], ['Tindakan', 'tindakan'], ['Masa', 'masa']], r.kesihatan, 'Tiada pelajar tidak sihat dilaporkan.')) +
       sec(4, 'Keadaan Sekeliling Sekolah', 'leaf', '<div class="table-wrap"><table class="t stack-m"><thead><tr><th>Aspek</th><th>Status</th><th>Catatan</th></tr></thead><tbody>' +
@@ -858,10 +915,10 @@
     setTitle('Pengguna');
     const users = [...S.db.users].sort((a, b) => a.role.localeCompare(b.role) || a.nama.localeCompare(b.nama));
     view.innerHTML = '<div class="page-head"><div><h1>Pengurusan Pengguna</h1><p>' + users.filter(u => u.role === 'guru').length + ' guru · ' + users.filter(u => u.role === 'admin').length + ' pentadbir</p></div><div class="page-actions"><button class="btn btn-primary" data-new>' + icon('plus') + ' Tambah pengguna</button></div></div>' +
-      '<section class="card"><div class="table-wrap"><table class="t stack-m"><thead><tr><th>Nama</th><th>Jawatan</th><th>Peranan</th><th>Telefon</th><th class="r">Giliran</th><th></th></tr></thead><tbody>' +
+      '<section class="card"><div class="table-wrap"><table class="t stack-m"><thead><tr><th>Nama</th><th>Jawatan</th><th>Peranan</th><th>Kelas diurus</th><th class="r">Giliran</th><th></th></tr></thead><tbody>' +
       users.map(u => '<tr><td class="t-main"><div style="display:flex;gap:10px;align-items:center">' + avatar(u) + '<div style="min-width:0"><b>' + esc(u.nama) + '</b><div class="tiny muted">' + esc(u.email) + '</div></div></div></td>' +
         '<td data-label="Jawatan">' + esc(u.jawatan) + '</td><td data-label="Peranan"><span class="role-tag ' + u.role + '">' + (u.role === 'admin' ? 'Pentadbir' : 'Guru') + '</span></td>' +
-        '<td data-label="Telefon">' + esc(u.telefon || '-') + '</td><td data-label="Giliran" class="r num">' + S.rostersForUser(u.id).length + '</td>' +
+        '<td data-label="Kelas diurus">' + (u.role === 'guru' ? '<span class="chip-list">' + (S.classesOf(u).map(c => '<span class="tag brand">' + esc(c.nama) + '</span>').join('') || '<span class="tag bad">Belum ditetapkan</span>') + '</span>' : '<span class="muted">Semua</span>') + '</td><td data-label="Giliran" class="r num">' + S.rostersForUser(u.id).length + '</td>' +
         '<td class="r" data-label=""><button class="btn btn-ghost btn-icon btn-sm" data-edit="' + u.id + '" aria-label="Edit">' + icon('edit') + '</button>' + (u.id !== me.id ? '<button class="btn btn-ghost btn-icon btn-sm" data-delu="' + u.id + '" aria-label="Padam">' + icon('trash') + '</button>' : '') + '</td></tr>').join('') +
       '</tbody></table></div></section>';
     H.click = async e => {
@@ -876,13 +933,19 @@
   }
 
   function userModal(u) {
-    const v = u || { nama: '', email: '', jawatan: '', telefon: '', role: 'guru' };
+    const v = u || { nama: '', email: '', jawatan: '', telefon: '', role: 'guru', kelasIds: [] };
     openModal(u ? 'Edit pengguna' : 'Tambah pengguna',
       '<form class="form" id="uForm"><label class="field"><span>Nama penuh *</span><input id="uNama" value="' + esc(v.nama) + '" placeholder="cth: Cikgu Ahmad bin Ali"></label>' +
       '<div class="form-row"><label class="field"><span>E-mel *</span><input type="email" id="uEmail" value="' + esc(v.email) + '"></label><label class="field"><span>Telefon</span><input id="uTel" value="' + esc(v.telefon) + '"></label></div>' +
       '<div class="form-row"><label class="field"><span>Jawatan</span><input id="uJaw" value="' + esc(v.jawatan) + '" placeholder="cth: Guru Matematik"></label><label class="field"><span>Peranan</span><select id="uRole"><option value="guru"' + (v.role === 'guru' ? ' selected' : '') + '>Guru</option><option value="admin"' + (v.role === 'admin' ? ' selected' : '') + '>Pentadbir</option></select></label></div>' +
+      '<div class="field" id="uKelasBox"' + (v.role === 'admin' ? ' hidden' : '') + '><span>Kelas diurus * <small>(pilih 2–3 kelas)</small></span><div class="pick-list" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">' +
+      S.db.classes.map(c => '<label class="pick"><input type="checkbox" value="' + c.id + '"' + ((v.kelasIds || []).includes(c.id) ? ' checked' : '') + '><span>' + esc(c.nama) + '<small>' + S.studentsIn(c.id).length + ' pelajar</small></span></label>').join('') + '</div></div>' +
       '<label class="field"><span>Kata laluan ' + (u ? '<small>(biarkan kosong jika tidak ditukar)</small>' : '*') + '</span><input type="text" id="uPw" placeholder="' + (u ? '••••••' : 'cth: guru123') + '"></label><p class="form-error" id="uErr" hidden></p></form>',
       '<button class="btn btn-outline" data-close>Batal</button><button class="btn btn-primary" id="uSave">' + icon('save') + ' Simpan</button>', m => {
+        $('#uRole', m).onchange = e => { $('#uKelasBox', m).hidden = e.target.value === 'admin'; };
+        const lim = () => { const on = $$('#uKelasBox input:checked', m).length; $$('#uKelasBox input', m).forEach(i => { i.disabled = !i.checked && on >= 3; }); };
+        m.addEventListener('change', e => { if (e.target.closest('#uKelasBox')) lim(); });
+        lim();
         $('#uSave', m).onclick = () => {
           const err = $('#uErr', m), val = id => $(id, m).value.trim();
           const email = val('#uEmail').toLowerCase();
@@ -892,9 +955,69 @@
           if (S.db.users.some(x => x.email.toLowerCase() === email && (!u || x.id !== u.id))) return fail('E-mel sudah digunakan.');
           if (!u && !val('#uPw')) return fail('Kata laluan diperlukan.');
           if (u && u.id === me.id && val('#uRole') !== 'admin') return fail('Anda tidak boleh menukar peranan akaun sendiri.');
-          S.saveUser({ ...(u || { id: S.uid('u') }), nama: val('#uNama'), email, telefon: val('#uTel'), jawatan: val('#uJaw') || (val('#uRole') === 'admin' ? 'Pentadbir' : 'Guru'), role: val('#uRole'), password: val('#uPw') || (u && u.password) });
+          const kelasIds = val('#uRole') === 'guru' ? $$('#uKelasBox input:checked', m).map(i => i.value) : [];
+          const minK = Math.min(2, S.db.classes.length);
+          if (val('#uRole') === 'guru' && (kelasIds.length < minK || kelasIds.length > 3)) return fail('Setiap guru mesti mengurus 2–3 kelas.');
+          S.saveUser({ ...(u || { id: S.uid('u') }), kelasIds, nama: val('#uNama'), email, telefon: val('#uTel'), jawatan: val('#uJaw') || (val('#uRole') === 'admin' ? 'Pentadbir' : 'Guru'), role: val('#uRole'), password: val('#uPw') || (u && u.password) });
           closeModal(); toast('Pengguna disimpan'); renderShell(); pengguna();
         };
+      });
+  }
+
+  /* =========================================================
+     KELAS & PELAJAR (admin sahaja boleh tambah / buang pelajar)
+     ========================================================= */
+  function kelasPage() {
+    setTitle('Kelas & Pelajar');
+    const cls = S.db.classes;
+    view.innerHTML = '<div class="page-head"><div><h1>Kelas & Pelajar</h1><p>' + cls.length + ' kelas · ' + S.db.students.length + ' pelajar. Hanya pentadbir boleh menambah atau membuang pelajar.</p></div><div class="page-actions"><button class="btn btn-primary" data-newk>' + icon('plus') + ' Tambah kelas</button></div></div>' +
+      '<div class="grid g-2">' + cls.map(c => {
+        const st = S.studentsIn(c.id), gt = S.teachersOfClass(c.id);
+        return '<section class="card cls-card"><div class="card-head"><div><h2>' + icon('grad') + esc(c.nama) + ' <span class="tag">' + st.length + ' pelajar</span></h2>' +
+          '<div class="chip-list" style="margin-top:8px">' + (gt.map(u => '<span class="tag brand">' + esc(u.nama.replace(/^Cikgu\s+/, '')) + '</span>').join('') || '<span class="tag warn">Tiada guru</span>') + '</div></div>' +
+          '<div style="display:flex;gap:4px"><button class="btn btn-ghost btn-icon btn-sm" data-editk="' + c.id + '" aria-label="Namakan semula">' + icon('edit') + '</button><button class="btn btn-ghost btn-icon btn-sm" data-delk="' + c.id + '" aria-label="Padam kelas">' + icon('trash') + '</button></div></div>' +
+          '<div>' + (st.map((x, i) => '<div class="stu-row"><span class="n">' + (i + 1) + '.</span><span class="grow">' + esc(x.nama) + '</span><button class="btn btn-ghost btn-icon btn-sm" data-dels="' + x.id + '" aria-label="Buang ' + esc(x.nama) + '">' + icon('trash') + '</button></div>').join('') || '<div class="empty" style="padding:20px">Tiada pelajar lagi.</div>') + '</div>' +
+          '<form class="add-stu" data-adds="' + c.id + '"><input name="nama" placeholder="Nama pelajar baharu" aria-label="Nama pelajar baharu untuk ' + esc(c.nama) + '"><button class="btn btn-primary" type="submit">' + icon('plus') + ' Tambah</button></form></section>';
+      }).join('') + '</div>' +
+      '<p class="tiny muted" style="margin-top:12px">Guru yang mengurus setiap kelas ditetapkan di halaman <a href="#/pengguna" style="text-decoration:underline">Pengguna</a>.</p>';
+    H.submit = e => {
+      const f = e.target.closest('[data-adds]'); if (!f) return;
+      e.preventDefault();
+      const nama = f.nama.value.trim(), kid = f.dataset.adds;
+      if (!nama) { f.nama.classList.add('invalid'); f.nama.focus(); return toast('Masukkan nama pelajar.', 'bad'); }
+      if (S.studentsIn(kid).some(x => x.nama.toLowerCase() === nama.toLowerCase())) return toast('Pelajar ini sudah ada dalam kelas.', 'bad');
+      S.saveStudent({ id: S.uid('s'), nama, kelasId: kid });
+      toast(nama + ' ditambah'); kelasPage();
+      const inp = $('[data-adds="' + kid + '"] input'); if (inp) inp.focus();
+    };
+    H.click = async e => {
+      const ds = e.target.closest('[data-dels]');
+      if (ds) {
+        const x = S.db.students.find(y => y.id === ds.dataset.dels);
+        if (await confirmBox('Buang pelajar?', esc(x.nama) + ' akan dibuang daripada senarai kelas. Laporan lama tidak terjejas.', 'Buang', true)) { S.deleteStudent(x.id); toast('Pelajar dibuang'); kelasPage(); }
+        return;
+      }
+      if (e.target.closest('[data-newk]')) return classModal(null);
+      const ek = e.target.closest('[data-editk]'); if (ek) return classModal(cls.find(c => c.id === ek.dataset.editk));
+      const dk = e.target.closest('[data-delk]');
+      if (dk) {
+        const c = cls.find(x => x.id === dk.dataset.delk);
+        if (await confirmBox('Padam kelas ' + esc(c.nama) + '?', 'Kelas dan ' + S.studentsIn(c.id).length + ' pelajarnya akan dipadam, dan dikeluarkan daripada guru yang mengurusnya.', 'Padam', true)) { S.deleteClass(c.id); toast('Kelas dipadam'); kelasPage(); }
+      }
+    };
+  }
+  function classModal(c) {
+    openModal(c ? 'Namakan semula kelas' : 'Tambah kelas', '<form class="form" id="kForm"><label class="field"><span>Nama kelas *</span><input id="kNama" value="' + esc(c ? c.nama : '') + '" placeholder="cth: 5 Sastera"></label><p class="form-error" id="kErr" hidden></p></form>',
+      '<button class="btn btn-outline" data-close>Batal</button><button class="btn btn-primary" id="kSave">' + icon('save') + ' Simpan</button>', m => {
+        const save = () => {
+          const nama = $('#kNama', m).value.trim(), err = $('#kErr', m);
+          if (!nama) { err.textContent = 'Nama kelas diperlukan.'; err.hidden = false; return; }
+          if (S.db.classes.some(x => x.nama.toLowerCase() === nama.toLowerCase() && (!c || x.id !== c.id))) { err.textContent = 'Nama kelas sudah wujud.'; err.hidden = false; return; }
+          S.saveClass({ ...(c || { id: S.uid('k') }), nama });
+          closeModal(); toast('Kelas disimpan'); kelasPage();
+        };
+        $('#kSave', m).onclick = save;
+        $('#kForm', m).onsubmit = e => { e.preventDefault(); save(); };
       });
   }
 
@@ -904,35 +1027,21 @@
   function tetapan() {
     setTitle('Tetapan');
     const st = S.db.settings;
-    let kelas = clone(S.db.classes);
-    view.innerHTML = '<div class="page-head"><div><h1>Tetapan Sekolah</h1><p>Maklumat sekolah, senarai kelas dan data demo.</p></div></div>' +
+    view.innerHTML = '<div class="page-head"><div><h1>Tetapan Sekolah</h1><p>Maklumat sekolah dan data demo.</p></div></div>' +
       '<div class="grid g-2"><section class="card"><div class="card-head"><h2>' + icon('school') + ' Maklumat sekolah</h2></div><div class="card-body"><form class="form" id="sForm">' +
       '<label class="field"><span>Nama sekolah</span><input id="sNama" value="' + esc(st.namaSekolah) + '"></label>' +
       '<div class="form-row"><label class="field"><span>Kod sekolah</span><input id="sKod" value="' + esc(st.kodSekolah) + '"></label><label class="field"><span>Jumlah guru</span><input type="number" min="1" id="sGuru" value="' + st.jumlahGuru + '"></label></div>' +
       '<label class="field"><span>Daerah / negeri</span><input id="sDaerah" value="' + esc(st.daerah) + '"></label>' +
       '<div><button class="btn btn-primary" type="submit">' + icon('save') + ' Simpan maklumat</button></div></form></div></section>' +
-      '<section class="card"><div class="card-head"><h2>' + icon('grad') + ' Kelas & enrolmen</h2><button class="btn btn-outline btn-sm" data-addk>' + icon('plus') + ' Kelas</button></div><div class="card-body"><div id="kList" class="rows"></div>' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;flex-wrap:wrap"><span class="tiny muted" id="kTot"></span><button class="btn btn-primary btn-sm" data-savek>' + icon('save') + ' Simpan kelas</button></div><p class="tiny muted" style="margin-top:8px">Perubahan kelas digunakan untuk laporan baharu.</p></div></section></div>' +
+      '<section class="card"><div class="card-head"><h2>' + icon('grad') + ' Kelas & pelajar</h2></div><div class="card-body" style="display:grid;gap:12px"><p class="muted">' + S.db.classes.length + ' kelas · ' + S.db.students.length + ' pelajar. Urus senarai pelajar setiap kelas dan guru yang mengurusnya.</p><div><a class="btn btn-primary" href="#/kelas">' + icon('grad') + ' Buka Kelas & Pelajar</a></div></div></section></div>' +
       '<section class="card" style="margin-top:18px"><div class="card-head"><h2>' + icon('undo') + ' Data demo</h2></div><div class="card-body" style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap"><p class="muted" style="max-width:560px">Set semula semua data (pengguna, jadual, laporan) kepada data contoh asal. Tindakan ini tidak boleh dibatalkan.</p><button class="btn btn-danger" data-reset>' + icon('undo') + ' Set semula data demo</button></div></section>';
-    const paintK = () => {
-      $('#kList').innerHTML = kelas.map((k, i) => '<div style="display:grid;grid-template-columns:1fr 100px auto;gap:8px;align-items:center"><input data-k="' + i + '" data-kf="nama" value="' + esc(k.nama) + '" aria-label="Nama kelas"><input type="number" min="0" data-k="' + i + '" data-kf="enrolmen" value="' + k.enrolmen + '" aria-label="Enrolmen"><button class="btn btn-ghost btn-icon btn-sm" data-delk="' + i + '" aria-label="Buang">' + icon('trash') + '</button></div>').join('');
-      $('#kTot').textContent = kelas.length + ' kelas · ' + kelas.reduce((a, k) => a + (Number(k.enrolmen) || 0), 0) + ' pelajar';
-    };
-    paintK();
     H.submit = e => {
       if (e.target.id !== 'sForm') return;
       e.preventDefault();
       Object.assign(S.db.settings, { namaSekolah: $('#sNama').value.trim() || st.namaSekolah, kodSekolah: $('#sKod').value.trim(), jumlahGuru: Math.max(1, +$('#sGuru').value || 1), daerah: $('#sDaerah').value.trim() });
       S.save(); renderShell(); setActive('tetapan'); toast('Maklumat sekolah disimpan');
     };
-    H.input = e => { const t = e.target; if (t.dataset.k !== undefined) { kelas[+t.dataset.k][t.dataset.kf] = t.dataset.kf === 'enrolmen' ? Math.max(0, +t.value || 0) : t.value; $('#kTot').textContent = kelas.length + ' kelas · ' + kelas.reduce((a, k) => a + (Number(k.enrolmen) || 0), 0) + ' pelajar'; } };
     H.click = async e => {
-      if (e.target.closest('[data-addk]')) { kelas.push({ id: S.uid('k'), nama: '', enrolmen: 30 }); paintK(); const ins = $$('#kList input[data-kf="nama"]'); ins[ins.length - 1].focus(); return; }
-      const dk = e.target.closest('[data-delk]'); if (dk) { kelas.splice(+dk.dataset.delk, 1); paintK(); return; }
-      if (e.target.closest('[data-savek]')) {
-        if (kelas.some(k => !k.nama.trim())) return toast('Nama kelas tidak boleh kosong.', 'bad');
-        S.db.classes = kelas.map(k => ({ ...k, nama: k.nama.trim() })); S.save(); toast('Senarai kelas disimpan'); return;
-      }
       if (e.target.closest('[data-reset]')) {
         if (await confirmBox('Set semula data demo?', 'Semua perubahan akan hilang dan data contoh asal dipulihkan.', 'Set semula', true)) {
           S.reset();
@@ -971,6 +1080,8 @@
 
   /* ---------- Mula ---------- */
   addEventListener('beforeunload', () => flush());
+  addEventListener('pagehide', () => flush());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   renderShell();
   route();
 })();
