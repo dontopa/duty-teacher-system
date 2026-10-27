@@ -1,4 +1,10 @@
-# SIGAP — Sistem Guru Bertugas Pintar
+# Sistem Guru Bertugas (SIGAP)
+
+[![Lesen: MIT](https://img.shields.io/badge/lesen-MIT-green.svg)](LICENSE)
+
+**Demo:** https://sistem-guru-bertugas.pages.dev
+
+> 🇬🇧 *Open-source weekly duty-teacher reporting system for Malaysian schools. Pure HTML/CSS/JS, no build step. Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).*
 
 Sistem laporan **guru bertugas mingguan** untuk sekolah. Guru bertugas mengisi laporan **mengikut hari** (Isnin–Jumaat) dalam 9 langkah, dan pihak pengurusan menyemak serta mengesahkannya.
 
@@ -48,7 +54,23 @@ python3 -m http.server 8000
 # buka http://localhost:8000
 ```
 
-Atau hos terus di GitHub Pages / mana-mana hos statik.
+## Deploy ke Cloudflare Pages (percuma)
+
+Laman ini statik, jadi Cloudflare Pages boleh hos terus dari GitHub dengan domain percuma `*.pages.dev`.
+
+1. Log masuk ke [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+2. Pilih repo `sistem-guru-bertugas`.
+3. Tetapan build:
+   - Framework preset: **None**
+   - Build command: *(kosongkan)*
+   - Build output directory: `/`
+4. **Save and Deploy**. Laman akan siap di `https://<nama-projek>.pages.dev`, dan setiap `git push` ke `main` akan deploy semula secara automatik.
+
+Atau guna CLI:
+
+```bash
+npx wrangler pages deploy . --project-name sistem-guru-bertugas
+```
 
 ## Struktur
 
@@ -63,3 +85,11 @@ assets/img/         logo.svg, favicon.svg
 ```
 
 > **Nota:** Ini versi demo — data disimpan dalam `localStorage` pelayar dan kata laluan tidak disulitkan. Untuk kegunaan sebenar, lapisan `assets/js/data.js` perlu disambungkan ke backend (cth. Laravel / Supabase / Firebase) dengan pengesahan selamat.
+
+## Sumbangan
+
+Cikgu, pelajar dan developer dialu-alukan menyumbang — laporkan bug, cadangkan ciri, atau hantar pull request. Baca [CONTRIBUTING.md](CONTRIBUTING.md) dahulu.
+
+## Lesen
+
+[MIT](LICENSE) © 2026 dontopa ([designbywan.com](https://designbywan.com))

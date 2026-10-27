@@ -168,14 +168,14 @@
 
   function seed() {
     const users = [
-      { id: 'u1', nama: 'Pn. Hjh. Rohana binti Ismail', email: 'admin@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Pengetua', telefon: '012-334 5521' },
-      { id: 'u2', nama: 'En. Kamal bin Hassan', email: 'kamal@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Penolong Kanan HEM', telefon: '013-778 2109' },
-      { id: 'u3', nama: 'Cikgu Aminah binti Yusof', email: 'aminah@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Bahasa Melayu', telefon: '011-2345 6789' },
-      { id: 'u4', nama: 'Cikgu Lim Wei Ling', email: 'lim@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Matematik', telefon: '016-552 8890' },
-      { id: 'u5', nama: 'Cikgu Rajesh a/l Kumar', email: 'rajesh@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Sains', telefon: '017-903 4412' },
-      { id: 'u6', nama: 'Cikgu Nurul Huda binti Ahmad', email: 'nurul@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Bahasa Inggeris', telefon: '019-221 0087' },
-      { id: 'u7', nama: 'Cikgu Faizal bin Omar', email: 'faizal@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Pendidikan Jasmani', telefon: '012-667 3301' },
-      { id: 'u8', nama: 'Cikgu Siti Mariam binti Zakaria', email: 'mariam@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Sejarah', telefon: '014-889 1276' }
+      { id: 'u1', nama: 'Pn. Hjh. Rohana binti Ismail', email: 'admin@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Pengetua', telefon: '01X-XXX XXXX' },
+      { id: 'u2', nama: 'En. Kamal bin Hassan', email: 'kamal@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Penolong Kanan HEM', telefon: '01X-XXX XXXX' },
+      { id: 'u3', nama: 'Cikgu Aminah binti Yusof', email: 'aminah@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Bahasa Melayu', telefon: '01X-XXX XXXX' },
+      { id: 'u4', nama: 'Cikgu Lim Wei Ling', email: 'lim@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Matematik', telefon: '01X-XXX XXXX' },
+      { id: 'u5', nama: 'Cikgu Rajesh a/l Kumar', email: 'rajesh@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Sains', telefon: '01X-XXX XXXX' },
+      { id: 'u6', nama: 'Cikgu Nurul Huda binti Ahmad', email: 'nurul@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Bahasa Inggeris', telefon: '01X-XXX XXXX' },
+      { id: 'u7', nama: 'Cikgu Faizal bin Omar', email: 'faizal@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Pendidikan Jasmani', telefon: '01X-XXX XXXX' },
+      { id: 'u8', nama: 'Cikgu Siti Mariam binti Zakaria', email: 'mariam@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Sejarah', telefon: '01X-XXX XXXX' }
     ];
     const classes = ['1 Amanah', '2 Bestari', '3 Amanah', '4 Sains', '4 Sastera', '5 Sains'].map((n, i) => ({ id: 'k' + (i + 1), nama: n }));
     const NAMA = [
