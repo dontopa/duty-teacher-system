@@ -1,28 +1,26 @@
-# Cara Menyumbang
+# Contributing
 
-Terima kasih sudi membantu Sistem Guru Bertugas! 🙏
+Thanks for helping out with the Duty Teacher System! 🙏
 
-## Laporkan bug / cadang ciri
+## Report a bug / suggest a feature
 
-Buka [issue baharu](https://github.com/dontopa/sistem-guru-bertugas/issues/new). Sertakan:
-- Apa yang berlaku vs apa yang sepatutnya berlaku
-- Langkah untuk ulang masalah
-- Pelayar & peranti (cth. Chrome, Android)
+Open a [new issue](https://github.com/dontopa/duty-teacher-system/issues/new). Please include:
+- What happened vs. what you expected
+- Steps to reproduce
+- Browser & device (e.g. Chrome, Android)
 
-Isu berlabel `good first issue` sesuai untuk penyumbang kali pertama.
+Issues labelled `good first issue` are a good place for first-time contributors.
 
-## Hantar pull request
+## Send a pull request
 
-1. Fork repo ini, kemudian buat branch: `git checkout -b ciri/nama-ringkas`
-2. Jalankan secara lokal: `python3 -m http.server 8000` → buka http://localhost:8000
-3. Uji dengan akaun demo guru **dan** pentadbir (lihat README).
-4. Commit dengan mesej jelas, kemudian buka pull request ke `main`.
+1. Fork this repo, then create a branch: `git checkout -b feature/short-name`
+2. Run it locally: `python3 -m http.server 8000` → open http://localhost:8000
+3. Test with both a **teacher** and an **administrator** demo account (see README).
+4. Commit with a clear message, then open a pull request against `main`.
 
-## Garis panduan
+## Guidelines
 
-- Kekal HTML, CSS & JavaScript tulen — tiada framework atau build step.
-- Teks antara muka dalam Bahasa Melayu.
-- **Jangan masukkan data sebenar** (nama pelajar, nombor telefon, maklumat sekolah). Guna data contoh sahaja.
-- Pastikan paparan mudah alih masih berfungsi.
-
-Komunikasi dalam BM atau English, kedua-duanya OK.
+- Keep it plain HTML, CSS & JavaScript — no frameworks or build step.
+- UI text is in English. (The Bahasa Melayu version lives in [sistem-guru-bertugas](https://github.com/dontopa/sistem-guru-bertugas).)
+- **Never commit real data** (student names, phone numbers, school details). Use sample data only.
+- Make sure the mobile layout still works.

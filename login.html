@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ms">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Log Masuk · SIGAP</title>
+  <title>Log In · SIGAP</title>
   <meta name="theme-color" content="#0f766e">
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,40 +16,40 @@
     <span class="a-blob a1"></span><span class="a-blob a2"></span>
     <a href="index.html" class="brand light"><img src="assets/img/logo.svg" alt="" width="40" height="40"><span>SIGAP</span></a>
     <div class="auth-quote">
-      <h2>Bertugas dengan tenang. Laporan siap sebelum loceng terakhir.</h2>
+      <h2>Stay calm on duty. Report done before the last bell.</h2>
       <ul>
-        <li><i data-ic="check"></i> 9 langkah laporan harian</li>
-        <li><i data-ic="check"></i> Pengesahan terus oleh pengurusan</li>
-        <li><i data-ic="check"></i> Mesra telefon bimbit</li>
+        <li><i data-ic="check"></i> 9-step daily report</li>
+        <li><i data-ic="check"></i> Direct approval by management</li>
+        <li><i data-ic="check"></i> Mobile-friendly</li>
       </ul>
     </div>
-    <small>Sistem Guru Bertugas Pintar</small>
+    <small>Smart Duty Teacher System</small>
   </aside>
 
   <main class="auth-main">
     <div class="auth-card">
       <a href="index.html" class="brand auth-brand-m"><img src="assets/img/logo.svg" alt="" width="36" height="36"><span>SIGAP</span></a>
-      <h1>Selamat kembali 👋</h1>
-      <p class="muted">Log masuk untuk mengisi atau menyemak laporan guru bertugas.</p>
+      <h1>Welcome back 👋</h1>
+      <p class="muted">Log in to fill in or review duty teacher reports.</p>
 
       <form id="loginForm" class="form" novalidate>
         <label class="field">
-          <span>E-mel</span>
-          <div class="input-ic"><i data-ic="mail"></i><input type="email" id="email" autocomplete="username" placeholder="nama@sigap.edu.my" required></div>
+          <span>Email</span>
+          <div class="input-ic"><i data-ic="mail"></i><input type="email" id="email" autocomplete="username" placeholder="name@sigap.edu.my" required></div>
         </label>
         <label class="field">
-          <span>Kata laluan</span>
+          <span>Password</span>
           <div class="input-ic"><i data-ic="lock"></i><input type="password" id="password" autocomplete="current-password" placeholder="••••••••" required></div>
         </label>
         <p class="form-error" id="err" role="alert" hidden></p>
-        <button class="btn btn-primary btn-block" type="submit">Log Masuk <i data-ic="arrow"></i></button>
+        <button class="btn btn-primary btn-block" type="submit">Log In <i data-ic="arrow"></i></button>
       </form>
 
       <div class="demo-box">
-        <div class="demo-head"><i data-ic="key"></i> Akaun demo — klik untuk log masuk</div>
+        <div class="demo-head"><i data-ic="key"></i> Demo accounts — click to log in</div>
         <div class="demo-list" id="demoList"></div>
       </div>
-      <p class="tiny muted">Data disimpan dalam pelayar anda (localStorage) untuk tujuan demo.</p>
+      <p class="tiny muted">Data is stored in your browser (localStorage) for demo purposes.</p>
     </div>
   </main>
 
@@ -70,12 +70,12 @@
         return '<button type="button" class="demo-item" data-email="' + u.email + '" data-pw="' + pw + '">' +
           '<span class="avatar ' + (u.role === 'admin' ? 'av-admin' : '') + '">' + ini + '</span>' +
           '<span class="demo-txt"><b>' + u.nama + '</b><small>' + u.email + ' · ' + pw + '</small></span>' +
-          '<span class="role-tag ' + u.role + '">' + (u.role === 'admin' ? 'Admin' : 'Guru') + '</span></button>';
+          '<span class="role-tag ' + u.role + '">' + (u.role === 'admin' ? 'Admin' : 'Teacher') + '</span></button>';
       }).join('');
       const form = document.getElementById('loginForm'), err = document.getElementById('err');
       function attempt(email, pw) {
         const u = SIGAP.login(email, pw);
-        if (!u) { err.textContent = 'E-mel atau kata laluan tidak sah.'; err.hidden = false; form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); return; }
+        if (!u) { err.textContent = 'Invalid email or password.'; err.hidden = false; form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); return; }
         location.href = 'app.html';
       }
       form.addEventListener('submit', e => { e.preventDefault(); attempt(email.value, password.value); });

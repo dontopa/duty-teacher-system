@@ -50,7 +50,7 @@
   });
 
   /* Perkataan bergilir dalam tajuk */
-  const words = ['lebih pantas.', 'lebih kemas.', 'tanpa kertas.', 'terus disahkan.'];
+  const words = ['done faster.', 'neatly organised.', 'paper-free.', 'approved instantly.'];
   const rot = document.querySelector('.rot-word');
   let wi = 0;
   if (!reduce) setInterval(() => {

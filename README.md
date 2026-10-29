@@ -1,95 +1,94 @@
-# Sistem Guru Bertugas (SIGAP)
+# Duty Teacher System (SIGAP)
 
-[![Lesen: MIT](https://img.shields.io/badge/lesen-MIT-green.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Demo:** https://sistem-guru-bertugas.pages.dev
+**Demo:** https://duty-teacher-system.pages.dev
 
-> 🇬🇧 *Open-source weekly duty-teacher reporting system for Malaysian schools. Pure HTML/CSS/JS, no build step. Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).*
+A weekly **duty teacher** reporting system for private and international schools. Duty teachers fill in a report **for each day** (Monday–Friday) in 9 steps, and management reviews and approves it.
 
-Sistem laporan **guru bertugas mingguan** untuk sekolah. Guru bertugas mengisi laporan **mengikut hari** (Isnin–Jumaat) dalam 9 langkah, dan pihak pengurusan menyemak serta mengesahkannya.
+> 🇲🇾 *Versi Bahasa Melayu untuk sekolah kerajaan: [sistem-guru-bertugas](https://github.com/dontopa/sistem-guru-bertugas).*
 
-## Aliran laporan harian (9 langkah)
+## Daily report flow (9 steps)
 
-1. Laporan kehadiran guru
-2. Laporan kehadiran pelajar (mengikut kelas, peratus dikira automatik)
-3. Laporan pelajar tidak sihat & ke klinik
-4. Laporan keadaan sekeliling sekolah
-5. Laporan kehadiran pelawat (jika ada)
-6. Laporan disiplin (lewat hadir, ponteng, dll.)
-7. Laporan aktiviti harian
-8. Pengesahan pihak pengurusan (akuan guru → sahkan / kembalikan oleh pentadbir)
-9. Tamat (ringkasan, sedia dicetak)
+1. Teacher attendance
+2. Student attendance (by class, percentage calculated automatically)
+3. Sick students & clinic visits
+4. School grounds & facilities
+5. Visitors (if any)
+6. Discipline (late arrival, skipping class, etc.)
+7. Daily activities
+8. Management approval (teacher declaration → approve / return by administrator)
+9. Done (summary, ready to print)
 
-## Peranan
+## Roles
 
-| Peranan | Boleh buat |
+| Role | Can do |
 |---|---|
-| **Guru** (tema hijau teal) | Urus 2–3 kelas sahaja. Lihat minggu bertugas & status setiap hari, isi laporan, hantar untuk pengesahan, buat pembetulan, cetak laporan |
-| **Pentadbir** (tema indigo) | Papan pemuka analitik, sahkan / kembalikan laporan dengan ulasan, urus jadual bertugas, urus pengguna & kelas yang diurus setiap guru, **tambah / buang pelajar**, tetapan sekolah |
+| **Teacher** (teal theme) | Manages 2–3 classes. Sees duty weeks & status of each day, fills in reports, submits for approval, makes corrections, prints reports |
+| **Administrator** (indigo theme) | Analytics dashboard, approve / return reports with comments, manage the duty roster, manage users & each teacher's classes, **add / remove students**, school settings |
 
-### Mudah untuk guru
-- **Pilih, bukan taip:** untuk kes kesihatan & disiplin, guru pilih kelas dahulu, kemudian pilih nama pelajar dari dropdown. Hanya kelas guru itu dipaparkan.
-- **Kehadiran ikut nama:** semua pelajar dianggap hadir; guru ketik nama yang tidak hadir, kemudian tanda "Kehadiran disemak".
-- **Simpan progres & sambung semula:** setiap langkah ada butang *Simpan progres*, dan semua perubahan juga disimpan automatik. Jika aplikasi tertutup, guru dibawa terus ke langkah terakhir apabila membukanya semula.
-- **Tiada mod gelap:** paparan cerah dan tulisan lebih besar supaya mudah dibaca.
+### Easy for teachers
+- **Pick, don't type:** for health and discipline cases, teachers pick a class and then a student from a dropdown. Only the teacher's own classes are shown.
+- **Attendance by name:** every student starts as present; the teacher taps the absent ones, then ticks "Attendance checked".
+- **Save progress & resume:** each step has a *Save progress* button and every change is auto-saved. If the app is closed, the teacher is taken straight back to the last step on reopening.
 
-## Akaun demo
+## Demo accounts
 
-| Peranan | E-mel | Kata laluan |
+| Role | Email | Password |
 |---|---|---|
-| Pentadbir (Pengetua) | `admin@sigap.edu.my` | `admin123` |
-| Pentadbir (PK HEM) | `kamal@sigap.edu.my` | `admin123` |
-| Guru (bertugas minggu ini) | `aminah@sigap.edu.my` | `guru123` |
-| Guru (bertugas minggu ini) | `lim@sigap.edu.my` | `guru123` |
-| Guru lain | `rajesh@`, `nurul@`, `faizal@`, `mariam@sigap.edu.my` | `guru123` |
+| Administrator (Principal) | `admin@sigap.edu.my` | `admin123` |
+| Administrator (Head of Student Affairs) | `kamal@sigap.edu.my` | `admin123` |
+| Teacher (on duty this week) | `aminah@sigap.edu.my` | `guru123` |
+| Teacher (on duty this week) | `lim@sigap.edu.my` | `guru123` |
+| Other teachers | `rajesh@`, `nurul@`, `faizal@`, `mariam@sigap.edu.my` | `guru123` |
 
-Data contoh: 6 kelas × 10 pelajar, setiap guru mengurus 2–3 kelas, jadual 7 minggu, dan laporan dalam semua status (disahkan / menunggu / perlu pembetulan / draf), dijana relatif kepada tarikh hari ini.
+Sample data: 6 classes × 10 students, each teacher manages 2–3 classes, a 7-week roster, and reports in every status (approved / pending / needs correction / draft), generated relative to today's date.
 
-## Cara jalankan
+## Running locally
 
-Tiada build step — HTML, CSS & JavaScript tulen.
+No build step — plain HTML, CSS & JavaScript.
 
 ```bash
 python3 -m http.server 8000
-# buka http://localhost:8000
+# open http://localhost:8000
 ```
 
-## Deploy ke Cloudflare Pages (percuma)
+## Deploying to Cloudflare Pages (free)
 
-Laman ini statik, jadi Cloudflare Pages boleh hos terus dari GitHub dengan domain percuma `*.pages.dev`.
+The site is static, so Cloudflare Pages can host it straight from GitHub on a free `*.pages.dev` domain.
 
-1. Log masuk ke [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Pilih repo `sistem-guru-bertugas`.
-3. Tetapan build:
+1. Log in to [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+2. Pick the `duty-teacher-system` repo.
+3. Build settings:
    - Framework preset: **None**
-   - Build command: *(kosongkan)*
+   - Build command: *(leave empty)*
    - Build output directory: `/`
-4. **Save and Deploy**. Laman akan siap di `https://<nama-projek>.pages.dev`, dan setiap `git push` ke `main` akan deploy semula secara automatik.
+4. **Save and Deploy**. The site will be live at `https://<project-name>.pages.dev`, and every `git push` to `main` redeploys automatically.
 
-Atau guna CLI:
+Or with the CLI:
 
 ```bash
-npx wrangler pages deploy . --project-name sistem-guru-bertugas
+npx wrangler pages deploy . --project-name duty-teacher-system
 ```
 
-## Struktur
+## Structure
 
 ```
-index.html          Landing page (animasi & motion)
-login.html          Log masuk + akaun demo
-app.html            Papan pemuka (SPA, hash routing)
-assets/css/         landing.css, app.css (tema guru/pentadbir & paparan mudah alih)
-assets/js/data.js   Lapisan data + penjana data contoh
-assets/js/app.js    Logik aplikasi (dashboard, wizard 9 langkah, pengesahan, jadual, kelas & pelajar, pengguna, tetapan)
+index.html          Landing page (animation & motion)
+login.html          Login + demo accounts
+app.html            Dashboard (SPA, hash routing)
+assets/css/         landing.css, app.css (teacher/admin themes & mobile layout)
+assets/js/data.js   Data layer + sample data generator
+assets/js/app.js    App logic (dashboard, 9-step wizard, approval, roster, classes & students, users, settings)
 assets/img/         logo.svg, favicon.svg
 ```
 
-> **Nota:** Ini versi demo — data disimpan dalam `localStorage` pelayar dan kata laluan tidak disulitkan. Untuk kegunaan sebenar, lapisan `assets/js/data.js` perlu disambungkan ke backend (cth. Laravel / Supabase / Firebase) dengan pengesahan selamat.
+> **Note:** This is a demo — data is stored in the browser's `localStorage` and passwords are not encrypted. For real use, `assets/js/data.js` needs to be connected to a backend (e.g. Laravel / Supabase / Firebase) with secure authentication.
 
-## Sumbangan
+## Contributing
 
-Cikgu, pelajar dan developer dialu-alukan menyumbang — laporkan bug, cadangkan ciri, atau hantar pull request. Baca [CONTRIBUTING.md](CONTRIBUTING.md) dahulu.
+Teachers, students and developers are welcome to contribute — report bugs, suggest features or send a pull request. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
-## Lesen
+## License
 
 [MIT](LICENSE) © 2026 dontopa ([designbywan.com](https://designbywan.com))

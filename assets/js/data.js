@@ -1,13 +1,13 @@
 /* SIGAP — lapisan data (localStorage) + data contoh.
    Semua data demo dijana relatif kepada tarikh hari ini supaya sentiasa "segar". */
 (function () {
-  const KEY = 'sigap_db_v1';
-  const SESSION_KEY = 'sigap_session';
+  const KEY = 'sigap_en_db_v1';
+  const SESSION_KEY = 'sigap_en_session';
 
   /* ---------- Utiliti tarikh ---------- */
-  const HARI = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
-  const BULAN = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
-  const BULAN_PENUH = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+  const HARI = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const BULAN_PENUH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   const pad = n => String(n).padStart(2, '0');
   const toISO = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -29,36 +29,36 @@
 
   /* ---------- Konstan domain ---------- */
   const STEPS = [
-    { key: 'guru', title: 'Kehadiran Guru', short: 'Guru', icon: 'userCheck', desc: 'Rekod guru yang tidak hadir dan sebabnya.' },
-    { key: 'pelajar', title: 'Kehadiran Pelajar', short: 'Pelajar', icon: 'grad', desc: 'Isi bilangan pelajar hadir mengikut kelas.' },
-    { key: 'kesihatan', title: 'Pelajar Tidak Sihat & Klinik', short: 'Kesihatan', icon: 'health', desc: 'Pelajar sakit, dirawat di bilik sakit atau dibawa ke klinik.' },
-    { key: 'sekitar', title: 'Keadaan Sekeliling Sekolah', short: 'Sekitar', icon: 'leaf', desc: 'Pemantauan kebersihan, keselamatan dan kemudahan.' },
-    { key: 'pelawat', title: 'Kehadiran Pelawat', short: 'Pelawat', icon: 'badge', desc: 'Pelawat ke sekolah pada hari ini (jika ada).' },
-    { key: 'disiplin', title: 'Laporan Disiplin', short: 'Disiplin', icon: 'alert', desc: 'Lewat hadir, ponteng, pakaian dan kesalahan lain.' },
-    { key: 'aktiviti', title: 'Aktiviti Harian', short: 'Aktiviti', icon: 'flag', desc: 'Aktiviti / program yang berlangsung hari ini.' },
-    { key: 'pengesahan', title: 'Pengesahan Pihak Pengurusan', short: 'Pengesahan', icon: 'shield', desc: 'Akuan guru bertugas dan pengesahan pentadbir.' },
-    { key: 'tamat', title: 'Tamat', short: 'Tamat', icon: 'done', desc: 'Ringkasan laporan hari ini.' }
+    { key: 'guru', title: 'Teacher Attendance', short: 'Teachers', icon: 'userCheck', desc: 'Record absent teachers and the reason.' },
+    { key: 'pelajar', title: 'Student Attendance', short: 'Students', icon: 'grad', desc: 'Mark student attendance by class.' },
+    { key: 'kesihatan', title: 'Sick Students & Clinic', short: 'Health', icon: 'health', desc: 'Students who were unwell, treated in the sick bay or taken to a clinic.' },
+    { key: 'sekitar', title: 'School Grounds & Facilities', short: 'Grounds', icon: 'leaf', desc: 'Cleanliness, safety and facilities check.' },
+    { key: 'pelawat', title: 'Visitors', short: 'Visitors', icon: 'badge', desc: 'Visitors to the school today (if any).' },
+    { key: 'disiplin', title: 'Discipline Report', short: 'Discipline', icon: 'alert', desc: 'Lateness, truancy, uniform and other offences.' },
+    { key: 'aktiviti', title: 'Daily Activities', short: 'Activities', icon: 'flag', desc: 'Activities / programmes held today.' },
+    { key: 'pengesahan', title: 'Management Approval', short: 'Approval', icon: 'shield', desc: 'Duty teacher declaration and administrator approval.' },
+    { key: 'tamat', title: 'Done', short: 'Done', icon: 'done', desc: "Summary of today's report." }
   ];
-  const SEBAB_GURU = ['Cuti Sakit (MC)', 'Kursus / Bengkel', 'Urusan Rasmi', 'Cuti Rehat Khas', 'Cuti Bersalin', 'Cuti Tanpa Rekod', 'Lain-lain'];
-  const TINDAKAN_SAKIT = ['Rehat di bilik sakit', 'Dibawa ke klinik', 'Dijemput ibu bapa', 'Dihantar ke hospital'];
-  const KESALAHAN = ['Lewat hadir', 'Ponteng kelas', 'Pakaian tidak kemas', 'Rambut tidak kemas', 'Membawa telefon bimbit', 'Bergaduh', 'Lain-lain'];
+  const SEBAB_GURU = ['Sick Leave (MC)', 'Course / Workshop', 'Official Duty', 'Personal Leave', 'Maternity Leave', 'Unrecorded Leave', 'Other'];
+  const TINDAKAN_SAKIT = ['Rested in sick bay', 'Taken to clinic', 'Picked up by parent', 'Sent to hospital'];
+  const KESALAHAN = ['Late arrival', 'Skipping class', 'Untidy uniform', 'Untidy hair', 'Mobile phone in class', 'Fighting', 'Other'];
   const ASPEK = [
-    { key: 'kelas', label: 'Kebersihan bilik darjah' },
-    { key: 'tandas', label: 'Tandas pelajar' },
-    { key: 'kantin', label: 'Kantin & kebersihan makanan' },
-    { key: 'kawasan', label: 'Kawasan, padang & taman' },
-    { key: 'pagar', label: 'Pagar & pintu masuk' },
-    { key: 'longkang', label: 'Longkang & saliran' },
-    { key: 'keselamatan', label: 'Keselamatan (pengawal)' },
-    { key: 'utiliti', label: 'Bekalan elektrik & air' }
+    { key: 'kelas', label: 'Classroom cleanliness' },
+    { key: 'tandas', label: 'Student toilets' },
+    { key: 'kantin', label: 'Cafeteria & food hygiene' },
+    { key: 'kawasan', label: 'Grounds, field & gardens' },
+    { key: 'pagar', label: 'Fences & entrances' },
+    { key: 'longkang', label: 'Drains' },
+    { key: 'keselamatan', label: 'Security (guards)' },
+    { key: 'utiliti', label: 'Electricity & water supply' }
   ];
-  const STATUS_ASPEK = ['Baik', 'Sederhana', 'Perlu Tindakan'];
+  const STATUS_ASPEK = ['Good', 'Fair', 'Needs Action'];
   const STATUS = {
-    draf: { label: 'Draf', short: 'Draf', tone: 'muted' },
-    dihantar: { label: 'Menunggu Pengesahan', short: 'Menunggu', tone: 'warn' },
-    disahkan: { label: 'Disahkan', short: 'Disahkan', tone: 'ok' },
-    dikembalikan: { label: 'Perlu Pembetulan', short: 'Pembetulan', tone: 'bad' },
-    tiada: { label: 'Belum Diisi', short: 'Belum diisi', tone: 'ghost' }
+    draf: { label: 'Draft', short: 'Draft', tone: 'muted' },
+    dihantar: { label: 'Pending Approval', short: 'Pending', tone: 'warn' },
+    disahkan: { label: 'Approved', short: 'Approved', tone: 'ok' },
+    dikembalikan: { label: 'Needs Correction', short: 'Correction', tone: 'bad' },
+    tiada: { label: 'Not Filled', short: 'Not filled', tone: 'ghost' }
   };
 
   /* ---------- Penjana data contoh ---------- */
@@ -70,36 +70,36 @@
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  const STAFF = ['Pn. Zarina binti Abu', 'En. Hafiz bin Rahman', 'Pn. Tan Mei Ling', 'En. Suresh a/l Muthu', 'Pn. Faridah binti Salleh', 'Cik Nur Aisyah binti Karim',
-    'En. Azman bin Daud', 'Pn. Wong Siew Yen', 'Pn. Kavitha a/p Raman', 'En. Mohd Firdaus bin Ali', 'Pn. Rosmah binti Jusoh', 'Cik Lee Hui Min',
-    'En. Ramli bin Ahmad', 'Pn. Salmiah binti Idris', 'En. Chong Kah Wai', 'Pn. Norhayati binti Musa'];
-  const SIMPTOM = ['Demam', 'Sakit perut', 'Pening kepala', 'Luka ketika PJ', 'Asma', 'Muntah', 'Terseliuh kaki', 'Sakit gigi'];
+  const STAFF = ['Mrs. Zarina binti Abu', 'Mr. Hafiz bin Rahman', 'Mrs. Tan Mei Ling', 'Mr. Suresh a/l Muthu', 'Mrs. Faridah binti Salleh', 'Ms. Nur Aisyah binti Karim',
+    'Mr. Azman bin Daud', 'Mrs. Wong Siew Yen', 'Mrs. Kavitha a/p Raman', 'Mr. Mohd Firdaus bin Ali', 'Mrs. Rosmah binti Jusoh', 'Ms. Lee Hui Min',
+    'Mr. Ramli bin Ahmad', 'Mrs. Salmiah binti Idris', 'Mr. Chong Kah Wai', 'Mrs. Norhayati binti Musa'];
+  const SIMPTOM = ['Fever', 'Stomach ache', 'Headache', 'Injury during PE', 'Asthma', 'Vomiting', 'Sprained ankle', 'Toothache'];
   const PELAWAT = [
-    { nama: 'En. Rizal bin Osman', organisasi: 'PPD Petaling Perdana', tujuan: 'Pemantauan PdP' },
-    { nama: 'Pn. Aishah binti Latif', organisasi: 'Ibu bapa', tujuan: 'Berjumpa guru kelas 3 Amanah' },
-    { nama: 'En. Gopal a/l Naidu', organisasi: 'Kontraktor TNB', tujuan: 'Penyelenggaraan pencawang' },
-    { nama: 'Pn. Chew Li Fang', organisasi: 'PIBG', tujuan: 'Mesyuarat AJK PIBG' },
-    { nama: 'Insp. Hairul bin Zaki', organisasi: 'IPD Shah Alam', tujuan: 'Ceramah pencegahan jenayah' },
-    { nama: 'En. Kamarul bin Yassin', organisasi: 'Pembekal buku teks', tujuan: 'Penghantaran buku SPBT' }
+    { nama: 'Mr. Rizal bin Osman', organisasi: 'Cambridge Assessment', tujuan: 'IGCSE centre inspection' },
+    { nama: 'Mrs. Aishah binti Latif', organisasi: 'Parent', tujuan: 'Meeting with Year 9 Emerald form teacher' },
+    { nama: 'Mr. Gopal a/l Naidu', organisasi: 'Electrical contractor', tujuan: 'Substation maintenance' },
+    { nama: 'Mrs. Chew Li Fang', organisasi: 'Parent-Teacher Association', tujuan: 'PTA committee meeting' },
+    { nama: 'Insp. Hairul bin Zaki', organisasi: 'Shah Alam District Police', tujuan: 'Crime prevention talk' },
+    { nama: 'Mr. Kamarul bin Yassin', organisasi: 'Textbook supplier', tujuan: 'Textbook delivery' }
   ];
   const AKTIVITI = [
-    ['07:20', 'Perhimpunan rasmi mingguan', 'Dataran sekolah'],
-    ['07:30', 'Bacaan Yasin & doa pagi', 'Surau / Dewan'],
-    ['10:00', 'Latihan rumah sukan', 'Padang sekolah'],
-    ['11:00', 'Ceramah Kesedaran Anti-Dadah', 'Dewan Seri Murni'],
-    ['14:30', 'Kokurikulum: Kelab & Persatuan', 'Bilik darjah'],
-    ['14:30', 'Latihan Pasukan Pancaragam', 'Dewan'],
-    ['09:00', 'Program Literasi Bahasa Inggeris', 'Pusat Sumber'],
-    ['12:30', 'Mesyuarat Panitia Sains', 'Bilik Mesyuarat'],
-    ['08:00', 'Ujian Pertengahan Tahun (Tingkatan 5)', 'Dewan Peperiksaan'],
-    ['15:00', 'Gotong-royong kelas', 'Seluruh kawasan sekolah']
+    ['07:20', 'Weekly school assembly', 'School quadrangle'],
+    ['07:30', 'Morning registration & reflection', 'Classrooms'],
+    ['10:00', 'House sports practice', 'School field'],
+    ['11:00', 'Anti-Drug Awareness Talk', 'Main Hall'],
+    ['14:30', 'CCA: Clubs & Societies', 'Classrooms'],
+    ['14:30', 'School Band Practice', 'Hall'],
+    ['09:00', 'Reading Programme', 'Library'],
+    ['12:30', 'Science Department Meeting', 'Meeting Room'],
+    ['08:00', 'Mid-Year Exams (Year 11)', 'Exam Hall'],
+    ['15:00', 'Class clean-up day', 'Whole school']
   ];
 
   // Satu baris kehadiran bagi setiap kelas (snapshot enrolmen dari senarai pelajar)
   function attRow(c, students) { const n = students.filter(x => x.kelasId === c.id).length; return { kelasId: c.id, nama: c.nama, enrolmen: n, hadir: n, tidakHadir: [], disemak: false }; }
   function blankReport(date, rosterId, uid, settings, classes, students) {
     const items = {};
-    ASPEK.forEach(a => { items[a.key] = { status: 'Baik', catatan: '' }; });
+    ASPEK.forEach(a => { items[a.key] = { status: 'Good', catatan: '' }; });
     return {
       id: 'r_' + date, date, rosterId, filledBy: uid, status: 'draf',
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), submittedAt: null,
@@ -131,19 +131,19 @@
       k.tidakHadir = [...abs].map(x => ({ id: x.id, nama: x.nama }));
       k.hadir = k.enrolmen - k.tidakHadir.length; k.disemak = status !== 'draf' || r() < .5;
     });
-    if (r() < 0.25) rep.pelajar.catatan = 'Beberapa pelajar Tingkatan 4 menyertai pertandingan di peringkat daerah.';
+    if (r() < 0.25) rep.pelajar.catatan = 'Several Year 10 students are representing the school at an inter-school competition.';
     const ks = Math.floor(r() * 3);
     for (let i = 0; i < ks; i++) rep.kesihatan.push({ ...pickStu(), simptom: pick(SIMPTOM), tindakan: pick(TINDAKAN_SAKIT.slice(0, 3)), masa: pad(8 + Math.floor(r() * 5)) + ':' + pad(Math.floor(r() * 4) * 15) });
     ASPEK.forEach(a => {
       const x = r();
-      if (x < 0.12) rep.sekitar.items[a.key] = { status: 'Perlu Tindakan', catatan: a.key === 'tandas' ? 'Paip bocor di tandas lelaki Blok B' : a.key === 'longkang' ? 'Longkang tersumbat berhampiran kantin' : 'Perlu perhatian penyelenggaraan' };
-      else if (x < 0.3) rep.sekitar.items[a.key] = { status: 'Sederhana', catatan: a.key === 'kelas' ? 'Sampah di koridor tingkat 2' : '' };
+      if (x < 0.12) rep.sekitar.items[a.key] = { status: 'Needs Action', catatan: a.key === 'tandas' ? "Leaking pipe in Block B boys' toilet" : a.key === 'longkang' ? 'Blocked drain near the cafeteria' : 'Needs maintenance attention' };
+      else if (x < 0.3) rep.sekitar.items[a.key] = { status: 'Fair', catatan: a.key === 'kelas' ? 'Litter in the level 2 corridor' : '' };
     });
     if (r() < 0.6) { const p = pick(PELAWAT); rep.pelawat.push({ ...p, masuk: '09:' + pad(Math.floor(r() * 6) * 10), keluar: '11:' + pad(Math.floor(r() * 6) * 10) }); }
     const dn = 1 + Math.floor(r() * 5);
     for (let i = 0; i < dn; i++) {
-      const kes = r() < 0.6 ? 'Lewat hadir' : pick(KESALAHAN);
-      rep.disiplin.push({ ...pickStu(), kesalahan: kes, masa: kes === 'Lewat hadir' ? '07:' + pad(31 + Math.floor(r() * 25)) : pad(9 + Math.floor(r() * 4)) + ':' + pad(Math.floor(r() * 6) * 10), tindakan: kes === 'Lewat hadir' ? 'Nama dicatat, amaran lisan' : 'Dirujuk kepada Guru Disiplin' });
+      const kes = r() < 0.6 ? 'Late arrival' : pick(KESALAHAN);
+      rep.disiplin.push({ ...pickStu(), kesalahan: kes, masa: kes === 'Late arrival' ? '07:' + pad(31 + Math.floor(r() * 25)) : pad(9 + Math.floor(r() * 4)) + ':' + pad(Math.floor(r() * 6) * 10), tindakan: kes === 'Late arrival' ? 'Name recorded, verbal warning' : 'Referred to Discipline Teacher' });
     }
     const dow = parseISO(date).getDay();
     const acts = dow === 1 ? [AKTIVITI[0]] : [AKTIVITI[1]];
@@ -160,7 +160,7 @@
       const v = new Date(day); v.setDate(v.getDate() + (r() < 0.6 ? 0 : 1)); v.setHours(16, 5 + Math.floor(r() * 50));
       rep.pengesahan = {
         status, oleh: admin.id, pada: v.toISOString(),
-        ulasan: status === 'disahkan' ? pick(['Laporan lengkap. Terima kasih.', 'Disahkan. Sila pantau isu tandas Blok B.', 'Baik. Teruskan pemantauan pelajar lewat.', '']) : 'Sila semak semula bilangan kehadiran pelajar kelas 4 Sains dan lengkapkan butiran pelawat.'
+        ulasan: status === 'disahkan' ? pick(['Complete report. Thank you.', 'Approved. Please keep an eye on the Block B toilet issue.', 'Good. Keep monitoring late arrivals.', '']) : 'Please recheck student attendance for 10 Science and complete the visitor details.'
       };
     }
     return rep;
@@ -168,16 +168,16 @@
 
   function seed() {
     const users = [
-      { id: 'u1', nama: 'Pn. Hjh. Rohana binti Ismail', email: 'admin@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Pengetua', telefon: '01X-XXX XXXX' },
-      { id: 'u2', nama: 'En. Kamal bin Hassan', email: 'kamal@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Penolong Kanan HEM', telefon: '01X-XXX XXXX' },
-      { id: 'u3', nama: 'Cikgu Aminah binti Yusof', email: 'aminah@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Bahasa Melayu', telefon: '01X-XXX XXXX' },
-      { id: 'u4', nama: 'Cikgu Lim Wei Ling', email: 'lim@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Matematik', telefon: '01X-XXX XXXX' },
-      { id: 'u5', nama: 'Cikgu Rajesh a/l Kumar', email: 'rajesh@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Sains', telefon: '01X-XXX XXXX' },
-      { id: 'u6', nama: 'Cikgu Nurul Huda binti Ahmad', email: 'nurul@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Bahasa Inggeris', telefon: '01X-XXX XXXX' },
-      { id: 'u7', nama: 'Cikgu Faizal bin Omar', email: 'faizal@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Pendidikan Jasmani', telefon: '01X-XXX XXXX' },
-      { id: 'u8', nama: 'Cikgu Siti Mariam binti Zakaria', email: 'mariam@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Guru Sejarah', telefon: '01X-XXX XXXX' }
+      { id: 'u1', nama: 'Dr. Rohana binti Ismail', email: 'admin@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Principal', telefon: '01X-XXX XXXX' },
+      { id: 'u2', nama: 'Mr. Kamal bin Hassan', email: 'kamal@sigap.edu.my', password: 'admin123', role: 'admin', jawatan: 'Head of Student Affairs', telefon: '01X-XXX XXXX' },
+      { id: 'u3', nama: 'Ms. Aminah binti Yusof', email: 'aminah@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Bahasa Melayu Teacher', telefon: '01X-XXX XXXX' },
+      { id: 'u4', nama: 'Ms. Lim Wei Ling', email: 'lim@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Mathematics Teacher', telefon: '01X-XXX XXXX' },
+      { id: 'u5', nama: 'Mr. Rajesh a/l Kumar', email: 'rajesh@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'Science Teacher', telefon: '01X-XXX XXXX' },
+      { id: 'u6', nama: 'Ms. Nurul Huda binti Ahmad', email: 'nurul@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'English Teacher', telefon: '01X-XXX XXXX' },
+      { id: 'u7', nama: 'Mr. Faizal bin Omar', email: 'faizal@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'PE Teacher', telefon: '01X-XXX XXXX' },
+      { id: 'u8', nama: 'Ms. Siti Mariam binti Zakaria', email: 'mariam@sigap.edu.my', password: 'guru123', role: 'guru', jawatan: 'History Teacher', telefon: '01X-XXX XXXX' }
     ];
-    const classes = ['1 Amanah', '2 Bestari', '3 Amanah', '4 Sains', '4 Sastera', '5 Sains'].map((n, i) => ({ id: 'k' + (i + 1), nama: n }));
+    const classes = ['Year 7 Emerald', 'Year 8 Sapphire', 'Year 9 Emerald', 'Year 10 Science', 'Year 10 Arts', 'Year 11 Science'].map((n, i) => ({ id: 'k' + (i + 1), nama: n }));
     const NAMA = [
       // 1 Amanah
       'Muhammad Adam bin Rizal', 'Nur Alya Sofea binti Azman', 'Lim Jun Hao', 'Arjun a/l Siva', 'Siti Nurhaliza binti Rahim', 'Ahmad Danish bin Kamal', 'Tan Yi Xuan', 'Nur Iman Qistina binti Hafiz', 'Muhammad Irfan bin Zulkifli', 'Priya a/p Ganesan',
@@ -195,7 +195,7 @@
     const students = NAMA.map((n, i) => ({ id: 's' + (i + 1), nama: n, kelasId: classes[Math.floor(i / 10)].id }));
     const kelasGuru = { u3: ['k1', 'k2', 'k3'], u4: ['k4', 'k5'], u5: ['k4', 'k6'], u6: ['k1', 'k5', 'k6'], u7: ['k2', 'k3'], u8: ['k3', 'k5', 'k6'] };
     users.forEach(u => { u.kelasIds = kelasGuru[u.id] || []; });
-    const settings = { namaSekolah: 'SMK Taman Seri Murni', kodSekolah: 'BEA8642', jumlahGuru: 48, daerah: 'Petaling Perdana, Selangor' };
+    const settings = { namaSekolah: 'Seri Murni International School', kodSekolah: 'SMIS-01', jumlahGuru: 48, daerah: 'Petaling Jaya, Selangor' };
 
     const thisMon = mondayOf(new Date());
     const plan = [[-3, ['u6', 'u8']], [-2, ['u7', 'u8']], [-1, ['u5', 'u6']], [0, ['u3', 'u4']], [1, ['u4', 'u7']], [2, ['u5', 'u3']], [3, ['u8', 'u6']]];
@@ -228,7 +228,7 @@
     if (!db || db.version !== 2) { db = seed(); save(); }
     return db;
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { console.warn('Gagal simpan', e); } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { console.warn('Save failed', e); } }
   function reset() { db = seed(); save(); }
   const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -236,7 +236,7 @@
     D, STEPS, SEBAB_GURU, TINDAKAN_SAKIT, KESALAHAN, ASPEK, STATUS_ASPEK, STATUS, STAFF,
     get db() { return db || load(); },
     load, save, reset, uid,
-    initials: n => n.replace(/\b(Pn|En|Cik|Cikgu|Hjh|Hj|Dr|Insp)\.?\s+/g, '').split(/\s+/).filter(w => w && !/^(bin|binti|a\/l|a\/p)$/i.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase(),
+    initials: n => n.replace(/\b(Mrs|Mr|Ms|Dr|Insp)\.?\s+/g, '').split(/\s+/).filter(w => w && !/^(bin|binti|a\/l|a\/p)$/i.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase(),
 
     /* Sesi */
     login(email, password) {
@@ -306,9 +306,9 @@
     },
 
     /* Sambung sesi (auto-resume) */
-    setResume(userId, date, step) { try { localStorage.setItem('sigap_resume_' + userId, JSON.stringify({ date, step, at: Date.now() })); } catch (e) { } },
-    getResume(userId) { try { return JSON.parse(localStorage.getItem('sigap_resume_' + userId)); } catch (e) { return null; } },
-    clearResume(userId) { try { localStorage.removeItem('sigap_resume_' + userId); } catch (e) { } },
+    setResume(userId, date, step) { try { localStorage.setItem('sigap_en_resume_' + userId, JSON.stringify({ date, step, at: Date.now() })); } catch (e) { } },
+    getResume(userId) { try { return JSON.parse(localStorage.getItem('sigap_en_resume_' + userId)); } catch (e) { return null; } },
+    clearResume(userId) { try { localStorage.removeItem('sigap_en_resume_' + userId); } catch (e) { } },
 
     /* Statistik */
     pelajarStat(rep) {
